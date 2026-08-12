@@ -33,7 +33,13 @@ function emptyItem(): LinkFormItem {
 
 const linkTypes: LinkType[] = ["linkedin", "github", "portfolio", "other"]
 
-export function LinksSection({ links }: { links: ProfileLink[] }) {
+export function LinksSection({
+  links,
+  embedded = false,
+}: {
+  links: ProfileLink[]
+  embedded?: boolean
+}) {
   const [items, setItems] = useState<LinkFormItem[]>(
     links.length > 0 ? links.map(toFormItem) : [emptyItem()]
   )
@@ -61,6 +67,7 @@ export function LinksSection({ links }: { links: ProfileLink[] }) {
   return (
     <ProfileSection
       title="Links"
+      hideTitle={embedded}
       action={
         <div className="flex gap-2">
           <Button

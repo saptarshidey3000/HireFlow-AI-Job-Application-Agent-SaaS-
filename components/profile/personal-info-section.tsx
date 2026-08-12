@@ -12,11 +12,13 @@ export function PersonalInfoSection({
   email,
   phone,
   location,
+  embedded = false,
 }: {
   fullName: string | null
   email: string | null
   phone: string | null
   location: string | null
+  embedded?: boolean
 }) {
   const [form, setForm] = useState({
     fullName: fullName ?? "",
@@ -47,6 +49,7 @@ export function PersonalInfoSection({
   return (
     <ProfileSection
       title="Personal Information"
+      hideTitle={embedded}
       action={
         <Button size="sm" onClick={handleSave} disabled={saving}>
           {saving ? "Saving…" : saved ? "Saved" : "Save"}

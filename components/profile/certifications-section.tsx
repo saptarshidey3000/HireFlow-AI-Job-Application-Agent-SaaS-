@@ -36,8 +36,10 @@ function emptyItem(): CertificationFormItem {
 
 export function CertificationsSection({
   certifications,
+  embedded = false,
 }: {
   certifications: ProfileCertification[]
+  embedded?: boolean
 }) {
   const [items, setItems] = useState<CertificationFormItem[]>(
     certifications.length > 0
@@ -68,6 +70,7 @@ export function CertificationsSection({
   return (
     <ProfileSection
       title="Certifications"
+      hideTitle={embedded}
       action={
         <div className="flex gap-2">
           <Button

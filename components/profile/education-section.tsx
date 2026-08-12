@@ -39,8 +39,10 @@ function emptyItem(): EducationFormItem {
 
 export function EducationSection({
   education,
+  embedded = false,
 }: {
   education: ProfileEducation[]
+  embedded?: boolean
 }) {
   const [items, setItems] = useState<EducationFormItem[]>(
     education.length > 0 ? education.map(toFormItem) : [emptyItem()]
@@ -69,6 +71,7 @@ export function EducationSection({
   return (
     <ProfileSection
       title="Education"
+      hideTitle={embedded}
       action={
         <div className="flex gap-2">
           <Button

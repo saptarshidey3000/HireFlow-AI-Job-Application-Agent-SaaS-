@@ -9,8 +9,10 @@ import { updateProfessionalSummary } from "@/lib/actions/profile"
 
 export function SummarySection({
   summary,
+  embedded = false,
 }: {
   summary: string | null
+  embedded?: boolean
 }) {
   const [value, setValue] = useState(summary ?? "")
   const [saving, setSaving] = useState(false)
@@ -37,6 +39,7 @@ export function SummarySection({
   return (
     <ProfileSection
       title="Professional Summary"
+      hideTitle={embedded}
       action={
         <Button size="sm" onClick={handleSave} disabled={saving}>
           {saving ? "Saving…" : saved ? "Saved" : "Save"}

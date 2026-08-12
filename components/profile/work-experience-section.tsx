@@ -44,8 +44,10 @@ function emptyItem(): WorkFormItem {
 
 export function WorkExperienceSection({
   workExperiences,
+  embedded = false,
 }: {
   workExperiences: ProfileWorkExperience[]
+  embedded?: boolean
 }) {
   const [items, setItems] = useState<WorkFormItem[]>(
     workExperiences.length > 0
@@ -91,6 +93,7 @@ export function WorkExperienceSection({
   return (
     <ProfileSection
       title="Work Experience"
+      hideTitle={embedded}
       action={
         <div className="flex gap-2">
           <Button
