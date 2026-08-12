@@ -248,3 +248,22 @@
   background: rgba(13, 59, 46, 0.25);
   border: 1px solid rgba(43, 138, 112, 0.25);
 }
+
+.glass-upload-zone {
+  background: rgba(36, 36, 36, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px dashed rgba(63, 169, 138, 0.35);
+  border-radius: 12px;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.glass-upload-zone:hover,
+.glass-upload-zone[data-dragging="true"] {
+  border-color: rgba(63, 169, 138, 0.65);
+  background: rgba(13, 59, 46, 0.2);
+  box-shadow: 0 0 24px rgba(43, 138, 112, 0.12);
+}
