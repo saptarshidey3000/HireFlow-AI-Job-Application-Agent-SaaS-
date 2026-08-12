@@ -7,8 +7,10 @@ import { JobList } from "@/components/jobs/job-list"
 import { JobsProfileCompleteness } from "@/components/jobs/jobs-profile-completeness"
 import { PlatformSelector } from "@/components/jobs/platform-selector"
 import { RecentActivity } from "@/components/jobs/recent-activity"
+import { TargetRoleSearch } from "@/components/jobs/target-role-search"
 import { WelcomeBanner } from "@/components/jobs/welcome-banner"
 import { DEFAULT_PLATFORMS } from "@/lib/jobs/platforms"
+import { inferTargetRole } from "@/lib/jobs/profile-context"
 import type {
   JobActivityItem,
   JobFilters,
@@ -34,6 +36,10 @@ export function JobsPageClient({
   profile: FullProfile
   activity: JobActivityItem[]
 }) {
+  const defaultRole = useMemo(() => inferTargetRole(profile), [profile])
+
+  const [targetRoleDraft, setTargetRoleDraft] = useState(defaultRole)
+  const [activeTargetRole, setActiveTargetRole] = useState(defaultRole)
   const [platforms, setPlatforms] = useState<JobPlatform[]>(DEFAULT_PLATFORMS)
   const [filters, setFilters] = useState<JobFilters>(EMPTY_FILTERS)
   const [jobs, setJobs] = useState<JobRecord[]>([])
@@ -42,6 +48,7 @@ export function JobsPageClient({
   const [toast, setToast] = useState<string | null>(null)
   const platformRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const skipDebounceRef = useRef(false)
 
   const platformCounts = useMemo(() => {
     const counts: Partial<Record<JobPlatform, number>> = {}
@@ -53,7 +60,15 @@ export function JobsPageClient({
   }, [jobs])
 
   const fetchJobs = useCallback(
-    async (forceRefresh = false) => {
+    async (targetRole: string, forceRefresh = false) => {
+      const trimmedRole = targetRole.trim()
+      if (!trimmedRole) {
+        setJobs([])
+        setLoading(false)
+        setError(null)
+        return
+      }
+
       setLoading(true)
       setError(null)
 
@@ -62,6 +77,7 @@ export function JobsPageClient({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            targetRole: trimmedRole,
             platforms,
             filters,
             forceRefresh,
@@ -91,16 +107,30 @@ export function JobsPageClient({
     [platforms, filters]
   )
 
+  const handleSearch = useCallback(() => {
+    const nextRole = targetRoleDraft.trim()
+    if (!nextRole) return
+
+    skipDebounceRef.current = true
+    setActiveTargetRole(nextRole)
+    void fetchJobs(nextRole, false)
+  }, [fetchJobs, targetRoleDraft])
+
   useEffect(() => {
+    if (skipDebounceRef.current) {
+      skipDebounceRef.current = false
+      return
+    }
+
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      void fetchJobs(false)
+      void fetchJobs(activeTargetRole, false)
     }, 350)
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [fetchJobs])
+  }, [activeTargetRole, fetchJobs])
 
   useEffect(() => {
     if (!toast) return
@@ -119,6 +149,13 @@ export function JobsPageClient({
   return (
     <div className="space-y-6">
       <WelcomeBanner fullName={profile.profile.full_name} />
+
+      <TargetRoleSearch
+        value={targetRoleDraft}
+        onChange={setTargetRoleDraft}
+        onSearch={handleSearch}
+        loading={loading}
+      />
 
       <div ref={platformRef}>
         <PlatformSelector
@@ -140,7 +177,8 @@ export function JobsPageClient({
             jobs={jobs}
             loading={loading}
             error={error}
-            onRetry={() => fetchJobs(true)}
+            targetRole={activeTargetRole}
+            onRetry={() => fetchJobs(activeTargetRole, true)}
             onSavedChange={(updated) =>
               setJobs((prev) =>
                 prev.map((job) => (job.id === updated.id ? updated : job))

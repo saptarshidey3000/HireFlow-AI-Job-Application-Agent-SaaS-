@@ -38,7 +38,7 @@ function buildExperienceClause(context: ProfileJobContext, filters: JobFilters):
   const level = filters.experienceLevel?.trim() || context.experienceLevel
 
   if (/entry|junior|graduate|fresher|0-1|1 year/i.test(level)) {
-    return '("junior" OR "entry level" OR "graduate")'
+    return '("junior" OR "entry level" OR "0-2 years" OR graduate)'
   }
   if (/mid/i.test(level)) {
     return '("mid level" OR "intermediate")'
@@ -105,9 +105,9 @@ function buildWorkModeClause(
   return `(${unique.join(" OR ")})`
 }
 
-function selectCoreSkills(context: ProfileJobContext, filters: JobFilters): string[] {
+function selectCoreSkills(context: ProfileJobContext, filters: JobFilters, targetRole: string): string[] {
   const roleTokens = new Set(
-    context.role.toLowerCase().split(/[^a-z0-9+#.]+/).filter(Boolean)
+    targetRole.toLowerCase().split(/[^a-z0-9+#.]+/).filter(Boolean)
   )
 
   const candidates = dedupeTerms([
@@ -136,30 +136,54 @@ function shouldIncludeLocation(
   return !remoteOnly && !(context.prefersRemote && filters.workModes.includes("remote"))
 }
 
+export interface JobSearchQueryInput {
+  targetRole: string
+  context: ProfileJobContext
+  filters: JobFilters
+  platforms: JobPlatform[]
+}
+
+export function buildJobSearchQuery(input: JobSearchQueryInput): string
 export function buildJobSearchQuery(
   context: ProfileJobContext,
   filters: JobFilters,
   platforms: JobPlatform[]
+): string
+export function buildJobSearchQuery(
+  inputOrContext: JobSearchQueryInput | ProfileJobContext,
+  filters?: JobFilters,
+  platforms?: JobPlatform[]
 ): string {
+  const input: JobSearchQueryInput =
+    "context" in inputOrContext
+      ? inputOrContext
+      : {
+          targetRole: inputOrContext.role,
+          context: inputOrContext,
+          filters: filters!,
+          platforms: platforms!,
+        }
+
+  const { targetRole, context, filters: jobFilters, platforms: selectedPlatforms } = input
   const parts: string[] = []
 
-  parts.push(quoteTerm(context.role))
+  parts.push(quoteTerm(targetRole))
 
-  for (const skill of selectCoreSkills(context, filters)) {
+  for (const skill of selectCoreSkills(context, jobFilters, targetRole)) {
     parts.push(quoteTerm(skill))
   }
 
-  const workModeClause = buildWorkModeClause(context, filters)
+  const workModeClause = buildWorkModeClause(context, jobFilters)
   if (workModeClause) parts.push(workModeClause)
 
-  const experienceClause = buildExperienceClause(context, filters)
+  const experienceClause = buildExperienceClause(context, jobFilters)
   if (experienceClause) parts.push(experienceClause)
 
-  const jobTypeClause = buildJobTypeClause(filters)
+  const jobTypeClause = buildJobTypeClause(jobFilters)
   if (jobTypeClause) parts.push(jobTypeClause)
 
-  const location = filters.location?.trim() || context.location
-  if (location && shouldIncludeLocation(context, filters)) {
+  const location = jobFilters.location?.trim() || context.location
+  if (location && shouldIncludeLocation(context, jobFilters)) {
     parts.push(quoteTerm(location))
   }
 
@@ -169,7 +193,7 @@ export function buildJobSearchQuery(
 
   parts.push('("jobs" OR "job opening" OR hiring OR vacancy)')
 
-  const siteRestriction = buildSiteRestriction(platforms)
+  const siteRestriction = buildSiteRestriction(selectedPlatforms)
   if (siteRestriction) parts.push(siteRestriction)
 
   let query = normalizeWhitespace(parts.filter(Boolean).join(" "))
@@ -182,11 +206,13 @@ export function buildJobSearchQuery(
 }
 
 export function buildSearchKey(
+  targetRole: string,
   context: ProfileJobContext,
   platforms: JobPlatform[],
   filters: JobFilters
 ): string {
   const payload = JSON.stringify({
+    targetRole: targetRole.trim().toLowerCase(),
     role: context.role,
     location: filters.location?.trim() || context.location || "",
     experienceLevel: filters.experienceLevel?.trim() || context.experienceLevel,
@@ -206,11 +232,12 @@ export function buildSearchKey(
 }
 
 export function buildJobSearchQueries(
+  targetRole: string,
   context: ProfileJobContext,
   filters: JobFilters,
   platforms: JobPlatform[]
 ): string[] {
-  const primary = buildJobSearchQuery(context, filters, platforms)
+  const primary = buildJobSearchQuery({ targetRole, context, filters, platforms })
 
   if (platforms.length <= 4) {
     return [primary]
@@ -226,7 +253,14 @@ export function buildJobSearchQueries(
   const queries = [primary]
 
   if (nichePlatforms.length > 0 && generalPlatforms.length > 0) {
-    queries.push(buildJobSearchQuery(context, filters, nichePlatforms))
+    queries.push(
+      buildJobSearchQuery({
+        targetRole,
+        context,
+        filters,
+        platforms: nichePlatforms,
+      })
+    )
   }
 
   return Array.from(new Set(queries))

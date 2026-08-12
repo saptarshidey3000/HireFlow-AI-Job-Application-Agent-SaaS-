@@ -6,16 +6,30 @@ export async function getFullProfile(
   supabase: SupabaseClient<Database>,
   userId: string
 ): Promise<FullProfile | null> {
+  return getJobSearchProfile(supabase, userId, { includeExtras: true })
+}
+
+export async function getJobSearchProfile(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  options?: { includeExtras?: boolean }
+): Promise<FullProfile | null> {
+  const includeExtras = options?.includeExtras ?? false
+
+  const profileQuery = supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle()
+
   const [
     { data: profile, error: profileError },
     { data: skills, error: skillsError },
     { data: workExperiences, error: workError },
     { data: education, error: educationError },
     { data: projects, error: projectsError },
-    { data: certifications, error: certsError },
-    { data: links, error: linksError },
   ] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    profileQuery,
     supabase
       .from("profile_skills")
       .select("*")
@@ -36,17 +50,32 @@ export async function getFullProfile(
       .select("*")
       .eq("user_id", userId)
       .order("sort_order"),
-    supabase
-      .from("profile_certifications")
-      .select("*")
-      .eq("user_id", userId)
-      .order("sort_order"),
-    supabase
-      .from("profile_links")
-      .select("*")
-      .eq("user_id", userId)
-      .order("sort_order"),
   ])
+
+  let certifications: FullProfile["certifications"] = []
+  let links: FullProfile["links"] = []
+  let certsError = null
+  let linksError = null
+
+  if (includeExtras) {
+    const [certsResult, linksResult] = await Promise.all([
+      supabase
+        .from("profile_certifications")
+        .select("*")
+        .eq("user_id", userId)
+        .order("sort_order"),
+      supabase
+        .from("profile_links")
+        .select("*")
+        .eq("user_id", userId)
+        .order("sort_order"),
+    ])
+
+    certifications = certsResult.data ?? []
+    links = linksResult.data ?? []
+    certsError = certsResult.error
+    linksError = linksResult.error
+  }
 
   const error =
     profileError ||
@@ -76,7 +105,7 @@ export async function getFullProfile(
         ? (item.technologies as string[])
         : [],
     })),
-    certifications: certifications ?? [],
-    links: links ?? [],
+    certifications,
+    links,
   }
 }

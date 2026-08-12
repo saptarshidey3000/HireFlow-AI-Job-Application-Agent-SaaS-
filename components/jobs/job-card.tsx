@@ -1,6 +1,14 @@
 "use client"
 
-import { Bookmark, BookmarkCheck, Building2, ExternalLink, MapPin } from "lucide-react"
+import {
+  Bookmark,
+  BookmarkCheck,
+  Building2,
+  Check,
+  ExternalLink,
+  MapPin,
+  Minus,
+} from "lucide-react"
 import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +55,67 @@ function MatchBar({ score }: { score: number }) {
           style={{ width: `${score}%` }}
         />
       </div>
+    </div>
+  )
+}
+
+function MatchHighlights({ job }: { job: JobRecord }) {
+  const { match_details: details } = job
+  const positives = [
+    ...details.matchedSkills,
+    ...details.matchedTechnologies,
+    ...(job.work_mode === "remote" ? ["Remote"] : []),
+  ].slice(0, 6)
+
+  if (positives.length === 0 && details.missingSkills.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="mt-4 space-y-3 rounded-xl border border-[rgba(63,169,138,0.12)] bg-[rgba(13,59,46,0.22)] p-4">
+      {positives.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {positives.map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(63,169,138,0.12)] px-2.5 py-1 text-xs text-[#3FA98A]"
+            >
+              <Check className="size-3" />
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {details.missingSkills.length > 0 ? (
+        <div>
+          <p className="text-xs font-medium text-[#A7A7A7]">Missing:</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {details.missingSkills.map((item) => (
+              <span
+                key={item}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.04)] px-2.5 py-1 text-xs text-[#707070]"
+              >
+                <Minus className="size-3" />
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {details.matchReason ? (
+        <div>
+          <p className="text-xs font-medium text-[#A7A7A7]">Why this matches</p>
+          <p className="mt-1 text-sm leading-relaxed text-[#CFCFCF]">
+            {details.matchReason}
+          </p>
+          <p className="mt-2 text-xs text-[#707070]">
+            Match is based on the job title and Google snippet preview, not the
+            full job description.
+          </p>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -106,7 +175,9 @@ export function JobCard({
 
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-medium text-white">{job.title}</h3>
-          <p className="text-sm text-[#A7A7A7]">{job.company ?? "Company"}</p>
+          {job.company ? (
+            <p className="text-sm text-[#A7A7A7]">{job.company}</p>
+          ) : null}
 
           {locationLine ? (
             <p className="mt-2 flex items-center gap-1.5 text-sm text-[#707070]">
@@ -141,6 +212,8 @@ export function JobCard({
             <MatchBar score={job.match_score} />
           </div>
 
+          <MatchHighlights job={job} />
+
           <div className="mt-4 flex items-center justify-between gap-3">
             <Badge>{platformName}</Badge>
             <div className="flex gap-2">
@@ -159,7 +232,7 @@ export function JobCard({
                 {saved ? "Saved" : "Save"}
               </Button>
               <Button type="button" size="sm" onClick={handleApply}>
-                Apply Now
+                Apply
                 <ExternalLink className="size-4" />
               </Button>
             </div>

@@ -9,6 +9,7 @@ export function JobList({
   jobs,
   loading,
   error,
+  targetRole,
   onRetry,
   onSavedChange,
   onToast,
@@ -18,6 +19,7 @@ export function JobList({
   jobs: JobRecord[]
   loading: boolean
   error: string | null
+  targetRole: string
   onRetry: () => void
   onSavedChange: (job: JobRecord) => void
   onToast: (message: string) => void
@@ -43,6 +45,11 @@ export function JobList({
       <JobsEmptyState
         onClearFilters={onClearFilters}
         onChangePlatforms={onChangePlatforms}
+        message={
+          targetRole.trim()
+            ? undefined
+            : "Enter a target role above to search for resume-matched jobs."
+        }
       />
     )
   }
@@ -50,7 +57,12 @@ export function JobList({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-white">Top Job Matches</h2>
+        <div>
+          <h2 className="text-lg font-medium text-white">Top Job Matches</h2>
+          {targetRole ? (
+            <p className="text-sm text-[#707070]">for {targetRole}</p>
+          ) : null}
+        </div>
         <p className="text-sm text-[#707070]">{jobs.length} results</p>
       </div>
       {jobs.map((job) => (

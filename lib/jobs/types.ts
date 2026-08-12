@@ -34,7 +34,18 @@ export interface JobFilters {
   postedWithin?: string
 }
 
+export interface JobMatchDetails {
+  matchedSkills: string[]
+  missingSkills: string[]
+  matchedTechnologies: string[]
+  experienceMatch: boolean
+  locationMatch: boolean
+  jobTypeMatch: boolean
+  matchReason: string
+}
+
 export interface JobDiscoverRequest {
+  targetRole: string
   platforms: JobPlatform[]
   filters: JobFilters
   forceRefresh?: boolean
@@ -55,6 +66,7 @@ export interface JobRecord {
   description: string | null
   tags: string[]
   match_score: number
+  match_details: JobMatchDetails
   job_url: string
   source_url: string | null
   applied_status: boolean

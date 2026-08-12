@@ -5,7 +5,7 @@ import {
   JobSearchUnavailableError,
 } from "@/lib/jobs/discover"
 import type { JobDiscoverRequest } from "@/lib/jobs/types"
-import { getFullProfile } from "@/lib/data/profile"
+import { getJobSearchProfile } from "@/lib/data/profile"
 import { createClient } from "@/lib/supabase/server"
 
 async function handleJobSearch(request: Request) {
@@ -19,12 +19,17 @@ async function handleJobSearch(request: Request) {
   const userId = data.claims.sub as string
   const body = (await request.json()) as JobDiscoverRequest
 
-  const profile = await getFullProfile(supabase, userId)
+  if (!body.targetRole?.trim()) {
+    return NextResponse.json({ error: "TARGET_ROLE_REQUIRED" }, { status: 400 })
+  }
+
+  const profile = await getJobSearchProfile(supabase, userId)
   if (!profile) {
     return NextResponse.json({ error: "PROFILE_REQUIRED" }, { status: 400 })
   }
 
   const result = await discoverJobs(supabase, userId, profile, {
+    targetRole: body.targetRole.trim(),
     platforms: body.platforms ?? [],
     filters: body.filters ?? {
       jobTypes: [],
