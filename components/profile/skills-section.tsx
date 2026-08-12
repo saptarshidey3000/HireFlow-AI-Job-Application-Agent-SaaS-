@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input"
 import { saveSkills } from "@/lib/actions/profile"
 import type { ProfileSkill } from "@/lib/supabase/database.types"
 
-export function SkillsSection({ skills }: { skills: ProfileSkill[] }) {
+export function SkillsSection({
+  skills,
+  embedded = false,
+}: {
+  skills: ProfileSkill[]
+  embedded?: boolean
+}) {
   const [items, setItems] = useState(skills.map((s) => s.name))
   const [newSkill, setNewSkill] = useState("")
   const [saving, setSaving] = useState(false)
@@ -47,6 +53,7 @@ export function SkillsSection({ skills }: { skills: ProfileSkill[] }) {
   return (
     <ProfileSection
       title="Skills"
+      hideTitle={embedded}
       action={
         <Button size="sm" onClick={handleSave} disabled={saving}>
           {saving ? "Saving…" : saved ? "Saved" : "Save"}

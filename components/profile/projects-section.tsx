@@ -35,7 +35,13 @@ function emptyItem(): ProjectFormItem {
   }
 }
 
-export function ProjectsSection({ projects }: { projects: ProfileProject[] }) {
+export function ProjectsSection({
+  projects,
+  embedded = false,
+}: {
+  projects: ProfileProject[]
+  embedded?: boolean
+}) {
   const [items, setItems] = useState<ProjectFormItem[]>(
     projects.length > 0 ? projects.map(toFormItem) : [emptyItem()]
   )
@@ -74,6 +80,7 @@ export function ProjectsSection({ projects }: { projects: ProfileProject[] }) {
   return (
     <ProfileSection
       title="Projects"
+      hideTitle={embedded}
       action={
         <div className="flex gap-2">
           <Button

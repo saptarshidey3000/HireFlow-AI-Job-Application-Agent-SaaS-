@@ -1,5 +1,6 @@
-import mammoth from "mammoth"
-import { PDFParse } from "pdf-parse"
+import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
+import "pdf-parse/worker";
 
 import {
   isAllowedResumeMimeType,
