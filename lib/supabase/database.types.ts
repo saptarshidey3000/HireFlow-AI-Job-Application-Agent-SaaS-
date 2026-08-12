@@ -309,6 +309,81 @@ export interface Database {
         }
         Relationships: []
       }
+      jobs: {
+        Row: {
+          id: string
+          user_id: string
+          platform: string
+          title: string
+          company: string | null
+          company_logo: string | null
+          location: string | null
+          salary: string | null
+          job_type: string | null
+          work_mode: string | null
+          experience_level: string | null
+          description: string | null
+          tags: string[]
+          match_score: number
+          job_url: string
+          source_url: string | null
+          applied_status: boolean
+          saved_status: boolean
+          search_key: string
+          fetched_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          platform: string
+          title: string
+          company?: string | null
+          company_logo?: string | null
+          location?: string | null
+          salary?: string | null
+          job_type?: string | null
+          work_mode?: string | null
+          experience_level?: string | null
+          description?: string | null
+          tags?: string[]
+          match_score?: number
+          job_url: string
+          source_url?: string | null
+          applied_status?: boolean
+          saved_status?: boolean
+          search_key: string
+          fetched_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          platform?: string
+          title?: string
+          company?: string | null
+          company_logo?: string | null
+          location?: string | null
+          salary?: string | null
+          job_type?: string | null
+          work_mode?: string | null
+          experience_level?: string | null
+          description?: string | null
+          tags?: string[]
+          match_score?: number
+          job_url?: string
+          source_url?: string | null
+          applied_status?: boolean
+          saved_status?: boolean
+          search_key?: string
+          fetched_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
