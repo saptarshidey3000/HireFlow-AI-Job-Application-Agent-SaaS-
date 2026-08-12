@@ -1,6 +1,25 @@
 import type { FullProfile } from "@/lib/supabase/database.types"
 import type { ProfileJobContext } from "@/lib/jobs/types"
 
+function normalizeSkill(value: string): string {
+  return value.replace(/\s+/g, " ").trim()
+}
+
+function dedupeSkills(values: string[]): string[] {
+  const seen = new Set<string>()
+  const result: string[] = []
+
+  for (const value of values) {
+    const normalized = normalizeSkill(value)
+    const key = normalized.toLowerCase()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    result.push(normalized)
+  }
+
+  return result
+}
+
 function parseYear(value: string | null | undefined): number | null {
   if (!value?.trim()) return null
   const match = value.match(/\b(19|20)\d{2}\b/)
@@ -66,21 +85,27 @@ function inferEducationKeyword(profile: FullProfile): string | null {
   return null
 }
 
+export function inferTargetRole(profile: FullProfile): string {
+  return inferRole(profile)
+}
+
 export function buildProfileJobContext(
   profile: FullProfile,
-  filters?: { workModes?: string[] }
+  options?: {
+    targetRole?: string
+    workModes?: string[]
+  }
 ): ProfileJobContext {
-  const skills = profile.skills.map((s) => s.name.trim()).filter(Boolean)
+  const skills = dedupeSkills(profile.skills.map((s) => s.name))
   const projectTech = profile.projects.flatMap((p) => p.technologies ?? [])
-  const techStack = Array.from(
-    new Set([...skills, ...projectTech].map((item) => item.trim()).filter(Boolean))
-  ).slice(0, 12)
+  const techStack = dedupeSkills([...skills, ...projectTech]).slice(0, 12)
 
   const yearsOfExperience = inferYearsOfExperience(profile)
-  const prefersRemote = Boolean(filters?.workModes?.includes("remote"))
+  const prefersRemote = Boolean(options?.workModes?.includes("remote"))
+  const role = options?.targetRole?.trim() || inferRole(profile)
 
   return {
-    role: inferRole(profile),
+    role,
     skills,
     techStack,
     location: profile.profile.location?.trim() || null,
