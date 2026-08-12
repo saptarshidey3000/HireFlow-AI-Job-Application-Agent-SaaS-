@@ -51,21 +51,34 @@
 
 :root {
   --background: #1c1c1c;
+  --background-dark: #000000;
   --foreground: #f5f5f5;
+  --text-primary: #ffffff;
+  --text-secondary: #a7a7a7;
+  --text-muted: #707070;
   --card: #242424;
   --card-foreground: #f5f5f5;
   --popover: #242424;
   --popover-foreground: #f5f5f5;
   --primary: #0d3b2e;
+  --primary-light: #145a46;
+  --primary-dark: #08251e;
   --primary-foreground: #ffffff;
   --secondary: #2d2d2d;
   --secondary-foreground: #f5f5f5;
+  --surface: #242424;
+  --surface-light: #2d2d2d;
   --muted: #242424;
   --muted-foreground: #a7a7a7;
   --accent: #2b8a70;
+  --accent-light: #3fa98a;
   --accent-foreground: #ffffff;
   --destructive: #e05a5a;
+  --success: #3fa98a;
+  --error: #e05a5a;
+  --warning: #d6a84f;
   --border: #333333;
+  --border-light: #404040;
   --input: #242424;
   --ring: #2b8a70;
   --chart-1: oklch(0.87 0 0);
@@ -210,5 +223,28 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
+}
+
+/* Dashboard */
+.glass-card {
+  background: rgba(36, 36, 36, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 150ms ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(63, 169, 138, 0.18);
+}
+
+.ai-surface {
+  background: rgba(13, 59, 46, 0.25);
+  border: 1px solid rgba(43, 138, 112, 0.25);
 }
