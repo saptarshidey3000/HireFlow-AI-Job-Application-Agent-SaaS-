@@ -8,8 +8,10 @@ import { NAV_LINKS } from "@/components/landing/constants"
 import { LiquidGlassButton } from "@/components/landing/shared"
 import { cn } from "@/lib/utils"
 
-export function Navbar() {
+export function Navbar({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const ctaHref = isAuthenticated ? "/dashboard" : "/signup"
+  const ctaLabel = isAuthenticated ? "Dashboard" : "Get Started"
 
   return (
     <>
@@ -34,7 +36,7 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:block">
-          <LiquidGlassButton href="/signup">Get Started</LiquidGlassButton>
+          <LiquidGlassButton href={ctaHref}>{ctaLabel}</LiquidGlassButton>
         </div>
 
         <button
@@ -67,11 +69,11 @@ export function Navbar() {
             </a>
           ))}
           <LiquidGlassButton
-            href="/signup"
+            href={ctaHref}
             className="mt-4 w-full text-center"
             onClick={() => setMobileOpen(false)}
           >
-            Get Started
+            {ctaLabel}
           </LiquidGlassButton>
         </div>
       </div>

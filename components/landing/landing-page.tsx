@@ -10,12 +10,12 @@ import { Navbar } from "@/components/landing/navbar"
 import { ProductIntro } from "@/components/landing/product-intro"
 import { SaasSection } from "@/components/landing/saas-section"
 
-export function LandingPage() {
+export function LandingPage({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   return (
     <div className="bg-[#001422] text-white">
       <section className="relative">
-        <Navbar />
-        <Hero />
+        <Navbar isAuthenticated={isAuthenticated} />
+        <Hero isAuthenticated={isAuthenticated} />
       </section>
       {/* <ProductIntro />
       <FeatureSection />

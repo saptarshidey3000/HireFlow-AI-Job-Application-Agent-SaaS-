@@ -1,7 +1,7 @@
 import { HERO_VIDEO_URL } from "@/components/landing/constants"
 import { LiquidGlassButton } from "@/components/landing/shared"
 
-export function Hero() {
+export function Hero({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   return (
     <div id="home" className="relative min-h-screen overflow-hidden" aria-label="Hero">
       <video
@@ -33,8 +33,8 @@ export function Hero() {
         </p>
 
         <div className="animate-fade-rise-delay-3 mt-12 flex flex-col items-center gap-4">
-          <LiquidGlassButton href="/signup" size="lg">
-            Start Applying Smarter
+          <LiquidGlassButton href={isAuthenticated ? "/dashboard" : "/signup"} size="lg">
+            {isAuthenticated ? "Go to Dashboard" : "Start Applying Smarter"}
           </LiquidGlassButton>
 
           <a
