@@ -5,9 +5,11 @@ import {
   BookmarkCheck,
   Building2,
   Check,
+  Clock3,
   ExternalLink,
   MapPin,
   Minus,
+  Sparkles,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -15,9 +17,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { toggleJobSaved } from "@/lib/actions/jobs"
 import { getPlatformConfig, JOB_PLATFORMS } from "@/lib/jobs/platforms"
+import { formatPublishedAtText } from "@/lib/jobs/published-date"
 import type { JobPlatform, JobRecord } from "@/lib/jobs/types"
 
 function getPlatformLabel(platform: string): string {
+  if (platform === "google_jobs") return "Google Jobs"
+
   const known = JOB_PLATFORMS.find((item) => item.id === platform)
   if (known) return known.name
 
@@ -45,17 +50,33 @@ function formatWorkMode(mode: string | null): string {
 
 function MatchBar({ score }: { score: number }) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-[#3FA98A]">{score}% Match</span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-[#333333]">
-        <div
-          className="h-full rounded-full bg-[#3FA98A] transition-all duration-500"
-          style={{ width: `${score}%` }}
-        />
-      </div>
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(63,169,138,0.12)] px-2.5 py-1 text-xs font-medium text-[#3FA98A]">
+      <Sparkles className="size-3.5" />
+      {score}% Resume Match
     </div>
+  )
+}
+
+function PublicationTime({ job }: { job: JobRecord }) {
+  const publishedLabel = formatPublishedAtText(
+    job.published_at,
+    job.published_at_text
+  )
+
+  if (!publishedLabel) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-[#707070]">
+        <Clock3 className="size-3.5" />
+        Date unavailable
+      </span>
+    )
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs text-[#3FA98A]">
+      <span className="size-2 rounded-full bg-[#3FA98A]" aria-hidden />
+      Posted {publishedLabel}
+    </span>
   )
 }
 
@@ -174,10 +195,19 @@ export function JobCard({
         </div>
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-medium text-white">{job.title}</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge>{platformName}</Badge>
+            <MatchBar score={job.match_score} />
+          </div>
+
+          <h3 className="mt-3 text-lg font-medium text-white">{job.title}</h3>
           {job.company ? (
             <p className="text-sm text-[#A7A7A7]">{job.company}</p>
           ) : null}
+
+          <div className="mt-2">
+            <PublicationTime job={job} />
+          </div>
 
           {locationLine ? (
             <p className="mt-2 flex items-center gap-1.5 text-sm text-[#707070]">
@@ -208,34 +238,27 @@ export function JobCard({
             </div>
           ) : null}
 
-          <div className="mt-4">
-            <MatchBar score={job.match_score} />
-          </div>
-
           <MatchHighlights job={job} />
 
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <Badge>{platformName}</Badge>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={saving}
-                onClick={handleSave}
-              >
-                {saved ? (
-                  <BookmarkCheck className="size-4 text-[#3FA98A]" />
-                ) : (
-                  <Bookmark className="size-4" />
-                )}
-                {saved ? "Saved" : "Save"}
-              </Button>
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={handleSave}
+            >
+              {saved ? (
+                <BookmarkCheck className="size-4 text-[#3FA98A]" />
+              ) : (
+                <Bookmark className="size-4" />
+              )}
+              {saved ? "Saved" : "Save"}
+            </Button>
               <Button type="button" size="sm" onClick={handleApply}>
-                Apply
+                Apply Now
                 <ExternalLink className="size-4" />
               </Button>
-            </div>
           </div>
         </div>
       </div>

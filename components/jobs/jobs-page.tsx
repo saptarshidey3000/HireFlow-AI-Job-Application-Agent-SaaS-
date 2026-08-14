@@ -11,11 +11,14 @@ import { TargetRoleSearch } from "@/components/jobs/target-role-search"
 import { WelcomeBanner } from "@/components/jobs/welcome-banner"
 import { DEFAULT_PLATFORMS } from "@/lib/jobs/platforms"
 import { inferTargetRole } from "@/lib/jobs/profile-context"
+import { sortJobs } from "@/lib/jobs/sorting"
 import type {
   JobActivityItem,
   JobFilters,
   JobPlatform,
   JobRecord,
+  JobSearchApiResponse,
+  JobSortMode,
 } from "@/lib/jobs/types"
 import type { FullProfile } from "@/lib/supabase/database.types"
 import { cn } from "@/lib/utils"
@@ -32,44 +35,76 @@ const EMPTY_FILTERS: JobFilters = {
 export function JobsPageClient({
   profile,
   activity,
+  userName,
 }: {
   profile: FullProfile
   activity: JobActivityItem[]
+  userName: string
 }) {
   const defaultRole = useMemo(() => inferTargetRole(profile), [profile])
+  const defaultLocation = profile.profile.location ?? ""
 
   const [targetRoleDraft, setTargetRoleDraft] = useState(defaultRole)
   const [activeTargetRole, setActiveTargetRole] = useState(defaultRole)
   const [platforms, setPlatforms] = useState<JobPlatform[]>(DEFAULT_PLATFORMS)
-  const [filters, setFilters] = useState<JobFilters>(EMPTY_FILTERS)
+  const [filters, setFilters] = useState<JobFilters>({
+    ...EMPTY_FILTERS,
+    location: defaultLocation,
+  })
+  const [sortMode, setSortMode] = useState<JobSortMode>("latest")
   const [jobs, setJobs] = useState<JobRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null)
+  const [hasMore, setHasMore] = useState(false)
   const platformRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const skipDebounceRef = useRef(false)
+  const requestIdRef = useRef(0)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const sortedJobs = useMemo(
+    () => sortJobs(jobs, sortMode, activeTargetRole),
+    [jobs, sortMode, activeTargetRole]
+  )
 
   const platformCounts = useMemo(() => {
     const counts: Partial<Record<JobPlatform, number>> = {}
-    for (const job of jobs) {
+    for (const job of sortedJobs) {
       const platform = job.platform as JobPlatform
-      counts[platform] = (counts[platform] ?? 0) + 1
+      if (platform in counts || DEFAULT_PLATFORMS.includes(platform)) {
+        counts[platform] = (counts[platform] ?? 0) + 1
+      }
     }
     return counts
-  }, [jobs])
+  }, [sortedJobs])
 
   const fetchJobs = useCallback(
-    async (targetRole: string, forceRefresh = false) => {
+    async (
+      targetRole: string,
+      options?: {
+        forceRefresh?: boolean
+        append?: boolean
+        pageToken?: string | null
+      }
+    ) => {
       const trimmedRole = targetRole.trim()
       if (!trimmedRole) {
         setJobs([])
         setLoading(false)
+        setSearching(false)
         setError(null)
         return
       }
 
-      setLoading(true)
+      const requestId = ++requestIdRef.current
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      setSearching(true)
       setError(null)
 
       try {
@@ -80,28 +115,49 @@ export function JobsPageClient({
             targetRole: trimmedRole,
             platforms,
             filters,
-            forceRefresh,
+            forceRefresh: options?.forceRefresh ?? false,
+            nextPageToken: options?.pageToken ?? undefined,
+            append: options?.append ?? false,
           }),
+          signal: controller.signal,
         })
 
-        const data = await response.json()
+        const data = (await response.json()) as JobSearchApiResponse
 
-        if (!response.ok) {
-          setError(
-            data.error === "JOB_SEARCH_UNAVAILABLE"
-              ? "We couldn't load jobs right now."
-              : "We couldn't load jobs right now."
-          )
-          setJobs([])
+        if (requestId !== requestIdRef.current) {
           return
         }
 
-        setJobs(data.jobs ?? [])
-      } catch {
-        setError("We couldn't load jobs right now.")
-        setJobs([])
+        if (!response.ok || !data.success) {
+          setError(
+            data.success
+              ? "Unable to fetch jobs right now."
+              : data.error.message
+          )
+          if (!options?.append) {
+            // Keep previous successful list visible during provider errors.
+          }
+          return
+        }
+
+        setJobs((prev) =>
+          options?.append ? mergeJobs(prev, data.jobs) : data.jobs
+        )
+        setHasMore(data.pagination.hasMore)
+        setNextPageToken(data.pagination.nextPageToken)
+        setError(null)
+      } catch (fetchError) {
+        if (fetchError instanceof Error && fetchError.name === "AbortError") {
+          return
+        }
+        if (requestId === requestIdRef.current) {
+          setError("Unable to fetch jobs right now.")
+        }
       } finally {
-        setLoading(false)
+        if (requestId === requestIdRef.current) {
+          setLoading(false)
+          setSearching(false)
+        }
       }
     },
     [platforms, filters]
@@ -113,7 +169,7 @@ export function JobsPageClient({
 
     skipDebounceRef.current = true
     setActiveTargetRole(nextRole)
-    void fetchJobs(nextRole, false)
+    void fetchJobs(nextRole, { forceRefresh: false })
   }, [fetchJobs, targetRoleDraft])
 
   useEffect(() => {
@@ -124,7 +180,7 @@ export function JobsPageClient({
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      void fetchJobs(activeTargetRole, false)
+      void fetchJobs(activeTargetRole, { forceRefresh: false })
     }, 350)
 
     return () => {
@@ -139,22 +195,30 @@ export function JobsPageClient({
   }, [toast])
 
   const handleClearFilters = () => {
-    setFilters(EMPTY_FILTERS)
+    setFilters({ ...EMPTY_FILTERS, location: defaultLocation })
   }
 
   const scrollToPlatforms = () => {
     platformRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
+  const handleLoadMore = () => {
+    if (!nextPageToken) return
+    void fetchJobs(activeTargetRole, {
+      append: true,
+      pageToken: nextPageToken,
+    })
+  }
+
   return (
     <div className="space-y-6">
-      <WelcomeBanner fullName={profile.profile.full_name} />
+      <WelcomeBanner userName={userName} />
 
       <TargetRoleSearch
         value={targetRoleDraft}
         onChange={setTargetRoleDraft}
         onSearch={handleSearch}
-        loading={loading}
+        loading={searching}
       />
 
       <div ref={platformRef}>
@@ -174,11 +238,17 @@ export function JobsPageClient({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="order-2 space-y-6 xl:order-1">
           <JobList
-            jobs={jobs}
+            jobs={sortedJobs}
             loading={loading}
+            searching={searching}
             error={error}
             targetRole={activeTargetRole}
-            onRetry={() => fetchJobs(activeTargetRole, true)}
+            sortMode={sortMode}
+            onSortChange={setSortMode}
+            onRetry={() => fetchJobs(activeTargetRole, { forceRefresh: true })}
+            onRefresh={() => fetchJobs(activeTargetRole, { forceRefresh: true })}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMore}
             onSavedChange={(updated) =>
               setJobs((prev) =>
                 prev.map((job) => (job.id === updated.id ? updated : job))
@@ -208,4 +278,15 @@ export function JobsPageClient({
       ) : null}
     </div>
   )
+}
+
+function mergeJobs(existing: JobRecord[], incoming: JobRecord[]): JobRecord[] {
+  const map = new Map<string, JobRecord>()
+  for (const job of existing) {
+    map.set(job.job_url, job)
+  }
+  for (const job of incoming) {
+    map.set(job.job_url, job)
+  }
+  return Array.from(map.values())
 }

@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import type { Database } from "@/lib/supabase/database.types"
-import type { JobMatchDetails, JobRecord } from "@/lib/jobs/types"
+import type { JobMatchDetails, JobRecord, JobSortMode } from "@/lib/jobs/types"
 
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000
+const LATEST_CACHE_TTL_MS = 60 * 60 * 1000
 
 const EMPTY_MATCH_DETAILS: JobMatchDetails = {
   matchedSkills: [],
@@ -15,9 +16,16 @@ const EMPTY_MATCH_DETAILS: JobMatchDetails = {
   matchReason: "",
 }
 
-export function isCacheFresh(fetchedAt: string | null): boolean {
+export function getCacheTtlMs(sortMode: JobSortMode): number {
+  return sortMode === "best_match" ? CACHE_TTL_MS : LATEST_CACHE_TTL_MS
+}
+
+export function isCacheFresh(
+  fetchedAt: string | null,
+  sortMode: JobSortMode = "latest"
+): boolean {
   if (!fetchedAt) return false
-  return Date.now() - new Date(fetchedAt).getTime() < CACHE_TTL_MS
+  return Date.now() - new Date(fetchedAt).getTime() < getCacheTtlMs(sortMode)
 }
 
 function toMatchDetailsJson(details: JobMatchDetails): Record<string, unknown> {
@@ -51,9 +59,10 @@ function parseMatchDetails(value: unknown): JobMatchDetails {
 export async function getCachedJobs(
   supabase: SupabaseClient<Database>,
   userId: string,
-  searchKey: string
+  searchKey: string,
+  sortMode: JobSortMode = "latest"
 ): Promise<{ jobs: JobRecord[]; fetchedAt: string | null }> {
-  const cutoff = new Date(Date.now() - CACHE_TTL_MS).toISOString()
+  const cutoff = new Date(Date.now() - getCacheTtlMs(sortMode)).toISOString()
 
   const { data, error } = await supabase
     .from("jobs")
@@ -61,7 +70,7 @@ export async function getCachedJobs(
     .eq("user_id", userId)
     .eq("search_key", searchKey)
     .gte("fetched_at", cutoff)
-    .order("match_score", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
 
   if (error) throw error
 
@@ -78,6 +87,9 @@ export function mapJobRow(row: Database["public"]["Tables"]["jobs"]["Row"]): Job
     job_type: row.job_type as JobRecord["job_type"],
     work_mode: row.work_mode as JobRecord["work_mode"],
     match_details: parseMatchDetails(row.match_details),
+    published_at: row.published_at ?? null,
+    published_at_text: row.published_at_text ?? null,
+    discovered_at: row.discovered_at ?? row.fetched_at,
   }
 }
 
@@ -95,11 +107,12 @@ export async function upsertJobs(
   >
 ): Promise<JobRecord[]> {
   const fetchedAt = new Date().toISOString()
+  const discoveredAt = fetchedAt
 
   const urls = jobs.map((job) => job.job_url)
   const { data: existing } = await supabase
     .from("jobs")
-    .select("job_url, saved_status, applied_status")
+    .select("job_url, saved_status, applied_status, discovered_at")
     .eq("user_id", userId)
     .in("job_url", urls)
 
@@ -114,6 +127,7 @@ export async function upsertJobs(
       user_id: userId,
       search_key: searchKey,
       fetched_at: fetchedAt,
+      discovered_at: prev?.discovered_at ?? job.discovered_at ?? discoveredAt,
       saved_status: prev?.saved_status ?? job.saved_status ?? false,
       applied_status: prev?.applied_status ?? job.applied_status ?? false,
       match_details: toMatchDetailsJson(job.match_details),
@@ -129,5 +143,5 @@ export async function upsertJobs(
 
   if (error) throw error
 
-  return (data ?? []).map(mapJobRow).sort((a, b) => b.match_score - a.match_score)
+  return (data ?? []).map(mapJobRow)
 }

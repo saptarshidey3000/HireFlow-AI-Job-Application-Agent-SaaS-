@@ -2,30 +2,60 @@ import { NextResponse } from "next/server"
 
 import {
   discoverJobs,
-  JobSearchUnavailableError,
+  toJobSearchApiError,
+  toJobSearchApiResponse,
 } from "@/lib/jobs/discover"
+import { SerpApiSearchError } from "@/lib/jobs/serpapi-client"
 import type { JobDiscoverRequest } from "@/lib/jobs/types"
 import { getJobSearchProfile } from "@/lib/data/profile"
 import { createClient } from "@/lib/supabase/server"
 
 async function handleJobSearch(request: Request) {
+  const startedAt = Date.now()
   const supabase = await createClient()
   const { data } = await supabase.auth.getClaims()
 
   if (!data?.claims?.sub) {
-    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "You must be signed in to search jobs.",
+        },
+      },
+      { status: 401 }
+    )
   }
 
   const userId = data.claims.sub as string
   const body = (await request.json()) as JobDiscoverRequest
 
   if (!body.targetRole?.trim()) {
-    return NextResponse.json({ error: "TARGET_ROLE_REQUIRED" }, { status: 400 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: "TARGET_ROLE_REQUIRED",
+          message: "Target role is required.",
+        },
+      },
+      { status: 400 }
+    )
   }
 
   const profile = await getJobSearchProfile(supabase, userId)
   if (!profile) {
-    return NextResponse.json({ error: "PROFILE_REQUIRED" }, { status: 400 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: "PROFILE_REQUIRED",
+          message: "Complete your profile before searching for jobs.",
+        },
+      },
+      { status: 400 }
+    )
   }
 
   const result = await discoverJobs(supabase, userId, profile, {
@@ -35,28 +65,45 @@ async function handleJobSearch(request: Request) {
       jobTypes: [],
       workModes: [],
     },
+    sortMode: body.sortMode,
     forceRefresh: body.forceRefresh ?? false,
+    nextPageToken: body.nextPageToken,
+    append: body.append ?? false,
   })
 
-  return NextResponse.json(result)
+  return NextResponse.json(
+    toJobSearchApiResponse(
+      result,
+      {
+        ...body,
+        targetRole: body.targetRole.trim(),
+      },
+      profile.profile.location,
+      Date.now() - startedAt
+    )
+  )
 }
 
 export async function POST(request: Request) {
   try {
     return await handleJobSearch(request)
   } catch (error) {
-    if (error instanceof JobSearchUnavailableError) {
-      console.error("[jobs/search]", error.message)
-      return NextResponse.json(
-        { error: "JOB_SEARCH_UNAVAILABLE" },
-        { status: 503 }
-      )
+    if (error instanceof SerpApiSearchError) {
+      console.error("[jobs/search]", error.code, error.message)
+    } else {
+      console.error("[jobs/search]", error)
     }
 
-    console.error("[jobs/search]", error)
-    return NextResponse.json(
-      { error: "JOB_SEARCH_UNAVAILABLE" },
-      { status: 503 }
-    )
+    const payload = toJobSearchApiError(error)
+    const status =
+      error instanceof SerpApiSearchError
+        ? error.code === "INVALID_REQUEST"
+          ? 401
+          : error.code === "RATE_LIMITED"
+            ? 429
+            : 503
+        : 503
+
+    return NextResponse.json(payload, { status })
   }
 }

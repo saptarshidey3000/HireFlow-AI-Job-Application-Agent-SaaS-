@@ -326,6 +326,9 @@ export interface Database {
           tags: string[]
           match_score: number
           match_details: Record<string, unknown>
+          published_at: string | null
+          published_at_text: string | null
+          discovered_at: string
           job_url: string
           source_url: string | null
           applied_status: boolean
@@ -351,6 +354,9 @@ export interface Database {
           tags?: string[]
           match_score?: number
           match_details?: Record<string, unknown>
+          published_at?: string | null
+          published_at_text?: string | null
+          discovered_at?: string
           job_url: string
           source_url?: string | null
           applied_status?: boolean
@@ -376,6 +382,9 @@ export interface Database {
           tags?: string[]
           match_score?: number
           match_details?: Record<string, unknown>
+          published_at?: string | null
+          published_at_text?: string | null
+          discovered_at?: string
           job_url?: string
           source_url?: string | null
           applied_status?: boolean

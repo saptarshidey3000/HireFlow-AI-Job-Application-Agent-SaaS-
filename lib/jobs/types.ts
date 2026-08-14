@@ -1,5 +1,8 @@
+export type JobSortMode = "latest" | "best_match" | "latest_best_match"
+
 export type JobPlatform =
   | "greenhouse"
+  | "lever"
   | "upwork"
   | "workable"
   | "wellfound"
@@ -21,8 +24,17 @@ export type WorkMode =
   | "onsite"
   | "unknown"
 
-export type JobTypeFilter = "full-time" | "part-time" | "internship"
+export type JobTypeFilter = "full-time" | "part-time" | "internship" | "contract"
 export type WorkModeFilter = "remote" | "hybrid" | "on-campus"
+
+export type JobSearchErrorCode =
+  | "SEARCH_PROVIDER_ERROR"
+  | "INVALID_REQUEST"
+  | "RATE_LIMITED"
+  | "NO_RESULTS"
+  | "UNAUTHORIZED"
+  | "PROFILE_REQUIRED"
+  | "TARGET_ROLE_REQUIRED"
 
 export interface JobFilters {
   jobTypes: JobTypeFilter[]
@@ -48,7 +60,10 @@ export interface JobDiscoverRequest {
   targetRole: string
   platforms: JobPlatform[]
   filters: JobFilters
+  sortMode?: JobSortMode
   forceRefresh?: boolean
+  nextPageToken?: string
+  append?: boolean
 }
 
 export interface JobRecord {
@@ -69,6 +84,9 @@ export interface JobRecord {
   match_details: JobMatchDetails
   job_url: string
   source_url: string | null
+  published_at: string | null
+  published_at_text: string | null
+  discovered_at: string
   applied_status: boolean
   saved_status: boolean
   search_key: string
@@ -89,13 +107,57 @@ export interface ProfileJobContext {
   educationKeyword: string | null
 }
 
-export interface CrawleoSearchResult {
-  title: string
-  link: string
-  snippet: string
-  position: number
+export interface JobSearchMeta {
+  targetRole: string
+  location: string
+  platforms: string[]
 }
 
+export interface JobSearchPagination {
+  hasMore: boolean
+  nextPageToken: string | null
+}
+
+export interface JobSearchApiSuccess {
+  success: true
+  jobs: JobRecord[]
+  total: number
+  search: JobSearchMeta
+  pagination: JobSearchPagination
+  meta: {
+    provider: "serpapi"
+    searchTimeMs: number
+    cached: boolean
+  }
+}
+
+export interface JobSearchApiFailure {
+  success: false
+  error: {
+    code: JobSearchErrorCode
+    message: string
+  }
+}
+
+export type JobSearchApiResponse = JobSearchApiSuccess | JobSearchApiFailure
+
+export interface JobDiscoverResponse {
+  jobs: JobRecord[]
+  cached: boolean
+  fetchedAt: string | null
+  sortMode: JobSortMode
+  pagination: JobSearchPagination
+  total: number
+}
+
+export interface JobActivityItem {
+  id: string
+  label: string
+  timestamp: string
+  type: "resume" | "saved" | "applied"
+}
+
+/** Legacy shape used by secondary filters; primary search uses SerpApi normalizer. */
 export interface JobSearchResult {
   title: string
   company: string | null
@@ -104,6 +166,9 @@ export interface JobSearchResult {
   source: string
   platform: JobPlatform | "unknown"
   position: number
+  publishedAt: string | null
+  publishedAtText: string | null
+  searchPlatform?: JobPlatform
 }
 
 export interface NormalizedJobInput {
@@ -117,18 +182,3 @@ export interface NormalizedJobInput {
   source_url?: string
   company_logo?: string
 }
-
-export interface JobDiscoverResponse {
-  jobs: JobRecord[]
-  cached: boolean
-  fetchedAt: string | null
-}
-
-export interface JobActivityItem {
-  id: string
-  label: string
-  timestamp: string
-  type: "resume" | "saved" | "applied"
-}
-
-export type JobSearchErrorCode = "JOB_SEARCH_UNAVAILABLE" | "UNAUTHORIZED" | "PROFILE_REQUIRED"

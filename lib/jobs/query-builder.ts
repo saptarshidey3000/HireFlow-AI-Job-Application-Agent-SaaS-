@@ -1,14 +1,13 @@
 import { createHash } from "crypto"
 
-import { buildSiteRestriction } from "@/lib/jobs/platforms"
+import { buildPlatformSiteRestriction } from "@/lib/jobs/platforms"
 import type {
   JobFilters,
   JobPlatform,
   ProfileJobContext,
-  WorkModeFilter,
 } from "@/lib/jobs/types"
 
-const MAX_QUERY_LENGTH = 420
+const MAX_QUERY_LENGTH = 200
 
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim()
@@ -34,78 +33,12 @@ function dedupeTerms(terms: string[]): string[] {
   return result
 }
 
-function buildExperienceClause(context: ProfileJobContext, filters: JobFilters): string | null {
-  const level = filters.experienceLevel?.trim() || context.experienceLevel
-
-  if (/entry|junior|graduate|fresher|0-1|1 year/i.test(level)) {
-    return '("junior" OR "entry level" OR "0-2 years" OR graduate)'
-  }
-  if (/mid/i.test(level)) {
-    return '("mid level" OR "intermediate")'
-  }
-  if (/senior|lead|principal/i.test(level)) {
-    return '("senior" OR "lead")'
-  }
-
-  if (context.yearsOfExperience <= 1) {
-    return '("junior" OR "entry level")'
-  }
-
-  return null
-}
-
-function buildJobTypeClause(filters: JobFilters): string | null {
-  if (filters.jobTypes.length === 0) return null
-
-  const clauses: string[] = []
-
-  if (filters.jobTypes.includes("full-time")) {
-    clauses.push('"full time"', '"full-time"')
-  }
-  if (filters.jobTypes.includes("part-time")) {
-    clauses.push('"part time"', '"part-time"')
-  }
-  if (filters.jobTypes.includes("internship")) {
-    clauses.push("internship", "intern")
-  }
-
-  const unique = dedupeTerms(clauses)
-  if (unique.length === 0) return null
-  if (unique.length === 1) return unique[0]
-  return `(${unique.join(" OR ")})`
-}
-
-function buildWorkModeClause(
+function selectRelevantSkills(
   context: ProfileJobContext,
-  filters: JobFilters
-): string | null {
-  const modes = new Set<WorkModeFilter>(filters.workModes)
-
-  if (modes.size === 0 && context.prefersRemote) {
-    modes.add("remote")
-  }
-
-  if (modes.size === 0) return null
-
-  const clauses: string[] = []
-
-  if (modes.has("remote")) {
-    clauses.push('"remote"', '"work from home"')
-  }
-  if (modes.has("hybrid")) {
-    clauses.push("hybrid")
-  }
-  if (modes.has("on-campus")) {
-    clauses.push('"on campus"')
-  }
-
-  const unique = dedupeTerms(clauses)
-  if (unique.length === 0) return null
-  if (unique.length === 1) return unique[0]
-  return `(${unique.join(" OR ")})`
-}
-
-function selectCoreSkills(context: ProfileJobContext, filters: JobFilters, targetRole: string): string[] {
+  filters: JobFilters,
+  targetRole: string,
+  max = 8
+): string[] {
   const roleTokens = new Set(
     targetRole.toLowerCase().split(/[^a-z0-9+#.]+/).filter(Boolean)
   )
@@ -114,95 +47,71 @@ function selectCoreSkills(context: ProfileJobContext, filters: JobFilters, targe
     ...(filters.skills ?? []),
     ...context.topSkills,
     ...context.techStack,
+    ...context.skills,
   ])
 
-  const filtered = candidates.filter((skill) => {
-    const lower = skill.toLowerCase()
-    if (roleTokens.has(lower)) return false
-    return skill.length >= 2
-  })
-
-  return filtered.slice(0, 4)
+  return candidates
+    .filter((skill) => {
+      const lower = skill.toLowerCase()
+      return skill.length >= 2 && !roleTokens.has(lower)
+    })
+    .slice(0, max)
 }
 
-function shouldIncludeLocation(
-  context: ProfileJobContext,
-  filters: JobFilters
-): boolean {
-  const remoteOnly =
-    filters.workModes.length > 0 &&
-    filters.workModes.every((mode) => mode === "remote")
-
-  return !remoteOnly && !(context.prefersRemote && filters.workModes.includes("remote"))
-}
-
-export interface JobSearchQueryInput {
+export interface BuildJobSearchQueryInput {
   targetRole: string
   context: ProfileJobContext
   filters: JobFilters
-  platforms: JobPlatform[]
 }
 
-export function buildJobSearchQuery(input: JobSearchQueryInput): string
-export function buildJobSearchQuery(
-  context: ProfileJobContext,
-  filters: JobFilters,
-  platforms: JobPlatform[]
-): string
-export function buildJobSearchQuery(
-  inputOrContext: JobSearchQueryInput | ProfileJobContext,
-  filters?: JobFilters,
-  platforms?: JobPlatform[]
-): string {
-  const input: JobSearchQueryInput =
-    "context" in inputOrContext
-      ? inputOrContext
-      : {
-          targetRole: inputOrContext.role,
-          context: inputOrContext,
-          filters: filters!,
-          platforms: platforms!,
-        }
+export function buildJobSearchQuery(input: BuildJobSearchQueryInput): string {
+  const { targetRole, context, filters } = input
+  const parts: string[] = [normalizeWhitespace(targetRole)]
 
-  const { targetRole, context, filters: jobFilters, platforms: selectedPlatforms } = input
-  const parts: string[] = []
-
-  parts.push(quoteTerm(targetRole))
-
-  for (const skill of selectCoreSkills(context, jobFilters, targetRole)) {
-    parts.push(quoteTerm(skill))
+  for (const skill of selectRelevantSkills(context, filters, targetRole)) {
+    parts.push(skill)
   }
 
-  const workModeClause = buildWorkModeClause(context, jobFilters)
-  if (workModeClause) parts.push(workModeClause)
-
-  const experienceClause = buildExperienceClause(context, jobFilters)
-  if (experienceClause) parts.push(experienceClause)
-
-  const jobTypeClause = buildJobTypeClause(jobFilters)
-  if (jobTypeClause) parts.push(jobTypeClause)
-
-  const location = jobFilters.location?.trim() || context.location
-  if (location && shouldIncludeLocation(context, jobFilters)) {
-    parts.push(quoteTerm(location))
+  if (filters.jobTypes.includes("internship")) {
+    parts.push("internship")
+  } else if (filters.jobTypes.includes("contract")) {
+    parts.push("contract")
+  } else if (filters.jobTypes.includes("part-time")) {
+    parts.push("part-time")
   }
 
-  if (context.educationKeyword && /intern|graduate|entry/i.test(context.experienceLevel)) {
-    parts.push(quoteTerm(context.educationKeyword))
+  const level = filters.experienceLevel?.trim() || context.experienceLevel
+  if (/entry|junior|graduate|fresher|0-1|1 year/i.test(level)) {
+    parts.push("entry level")
+  } else if (/senior|lead|principal/i.test(level)) {
+    parts.push("senior")
   }
 
-  parts.push('("jobs" OR "job opening" OR hiring OR vacancy)')
+  if (filters.workModes.includes("remote") || context.prefersRemote) {
+    parts.push("remote")
+  }
 
-  const siteRestriction = buildSiteRestriction(selectedPlatforms)
-  if (siteRestriction) parts.push(siteRestriction)
-
-  let query = normalizeWhitespace(parts.filter(Boolean).join(" "))
+  let query = dedupeTerms(parts).join(" ")
 
   if (query.length > MAX_QUERY_LENGTH) {
     query = query.slice(0, MAX_QUERY_LENGTH).replace(/\s+\S*$/, "")
   }
 
   return query
+}
+
+export function buildPlatformFallbackQuery(
+  platform: JobPlatform,
+  targetRole: string,
+  location?: string | null
+): string {
+  const parts = [buildPlatformSiteRestriction(platform), quoteTerm(targetRole)]
+
+  if (location?.trim()) {
+    parts.push(quoteTerm(location.trim()))
+  }
+
+  return normalizeWhitespace(parts.filter(Boolean).join(" "))
 }
 
 export function buildSearchKey(
@@ -213,58 +122,26 @@ export function buildSearchKey(
 ): string {
   const payload = JSON.stringify({
     targetRole: targetRole.trim().toLowerCase(),
-    role: context.role,
     location: filters.location?.trim() || context.location || "",
     experienceLevel: filters.experienceLevel?.trim() || context.experienceLevel,
-    yearsOfExperience: context.yearsOfExperience,
     prefersRemote: context.prefersRemote,
     platforms: [...platforms].sort(),
     jobTypes: [...filters.jobTypes].sort(),
     workModes: [...filters.workModes].sort(),
-    skills: dedupeTerms([
-      ...(filters.skills ?? []),
-      ...context.topSkills,
-      ...context.techStack.slice(0, 4),
-    ]).sort(),
+    skills: selectRelevantSkills(context, filters, targetRole, 10).sort(),
+    provider: "serpapi",
   })
 
   return createHash("sha256").update(payload).digest("hex").slice(0, 24)
 }
 
-export function buildJobSearchQueries(
+export function buildPlatformFallbackQueries(
+  platforms: JobPlatform[],
   targetRole: string,
-  context: ProfileJobContext,
-  filters: JobFilters,
-  platforms: JobPlatform[]
-): string[] {
-  const primary = buildJobSearchQuery({ targetRole, context, filters, platforms })
-
-  if (platforms.length <= 4) {
-    return [primary]
-  }
-
-  const generalPlatforms = platforms.filter((platform) =>
-    ["indeed", "linkedin", "wellfound", "greenhouse", "workable"].includes(platform)
-  )
-  const nichePlatforms = platforms.filter((platform) =>
-    ["upwork", "internshala"].includes(platform)
-  )
-
-  const queries = [primary]
-
-  if (nichePlatforms.length > 0 && generalPlatforms.length > 0) {
-    queries.push(
-      buildJobSearchQuery({
-        targetRole,
-        context,
-        filters,
-        platforms: nichePlatforms,
-      })
-    )
-  }
-
-  return Array.from(new Set(queries))
+  location?: string | null
+): Array<{ platform: JobPlatform; query: string }> {
+  return platforms.map((platform) => ({
+    platform,
+    query: buildPlatformFallbackQuery(platform, targetRole, location),
+  }))
 }
-
-// Backward-compatible export name used by discover flow
-export { buildJobSearchQuery as buildPlatformQuery }
