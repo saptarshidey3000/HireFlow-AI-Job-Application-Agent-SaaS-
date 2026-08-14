@@ -10,7 +10,6 @@ import { RecentActivity } from "@/components/jobs/recent-activity"
 import { TargetRoleSearch } from "@/components/jobs/target-role-search"
 import { WelcomeBanner } from "@/components/jobs/welcome-banner"
 import { DEFAULT_PLATFORMS } from "@/lib/jobs/platforms"
-import { inferTargetRole } from "@/lib/jobs/profile-context"
 import { sortJobs } from "@/lib/jobs/sorting"
 import type {
   JobActivityItem,
@@ -26,7 +25,7 @@ import { cn } from "@/lib/utils"
 const EMPTY_FILTERS: JobFilters = {
   jobTypes: [],
   workModes: [],
-  location: "",
+  location: "India",
   experienceLevel: "",
   salaryMin: "",
   postedWithin: "",
@@ -52,19 +51,17 @@ export function JobsPageClient({
   activity: JobActivityItem[]
   userName: string
 }) {
-  const defaultRole = useMemo(() => inferTargetRole(profile), [profile])
-  const defaultLocation = profile.profile.location ?? ""
-
-  const [targetRoleDraft, setTargetRoleDraft] = useState(defaultRole)
-  const [activeTargetRole, setActiveTargetRole] = useState(defaultRole)
+  // Target role starts COMPLETELY EMPTY per requirement 6
+  const [targetRoleDraft, setTargetRoleDraft] = useState("")
+  const [activeTargetRole, setActiveTargetRole] = useState("")
   const [platforms, setPlatforms] = useState<JobPlatform[]>(DEFAULT_PLATFORMS)
   const [filters, setFilters] = useState<JobFilters>({
     ...EMPTY_FILTERS,
-    location: defaultLocation,
+    location: "India",
   })
   const [sortMode, setSortMode] = useState<JobSortMode>("latest")
   const [jobs, setJobs] = useState<JobRecord[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -75,7 +72,6 @@ export function JobsPageClient({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
-  const isMountedRef = useRef(false)
 
   const sortedJobs = useMemo(
     () => sortJobs(jobs, sortMode, activeTargetRole),
@@ -183,17 +179,6 @@ export function JobsPageClient({
     [sortMode]
   )
 
-  // Initial search on mount
-  useEffect(() => {
-    if (isMountedRef.current) return
-    isMountedRef.current = true
-
-    void executeSearch(defaultRole, DEFAULT_PLATFORMS, {
-      ...EMPTY_FILTERS,
-      location: defaultLocation,
-    })
-  }, [defaultRole, defaultLocation, executeSearch])
-
   // Handle typing in search input with 350ms debounce
   const handleRoleInputChange = useCallback(
     (newRole: string) => {
@@ -203,12 +188,18 @@ export function JobsPageClient({
         clearTimeout(debounceRef.current)
       }
 
+      const trimmed = newRole.trim()
+      if (!trimmed) {
+        setActiveTargetRole("")
+        setJobs([])
+        setError(null)
+        setSearching(false)
+        return
+      }
+
       debounceRef.current = setTimeout(() => {
-        const trimmed = newRole.trim()
-        if (trimmed) {
-          setActiveTargetRole(trimmed)
-          void executeSearch(trimmed, platforms, filters)
-        }
+        setActiveTargetRole(trimmed)
+        void executeSearch(trimmed, platforms, filters)
       }, 350)
     },
     [platforms, filters, executeSearch]
@@ -247,7 +238,7 @@ export function JobsPageClient({
     [targetRoleDraft, activeTargetRole, filters, executeSearch]
   )
 
-  // Handle filter changes (immediate update)
+  // Handle filter changes (immediate update, including remote)
   const handleFiltersChange = useCallback(
     (nextFilters: JobFilters) => {
       setFilters(nextFilters)
@@ -267,9 +258,9 @@ export function JobsPageClient({
   )
 
   const handleClearFilters = useCallback(() => {
-    const cleared: JobFilters = { ...EMPTY_FILTERS, location: defaultLocation }
+    const cleared: JobFilters = { ...EMPTY_FILTERS, location: "India" }
     handleFiltersChange(cleared)
-  }, [defaultLocation, handleFiltersChange])
+  }, [handleFiltersChange])
 
   const handleRefresh = useCallback(() => {
     const role = activeTargetRole.trim() || targetRoleDraft.trim()
