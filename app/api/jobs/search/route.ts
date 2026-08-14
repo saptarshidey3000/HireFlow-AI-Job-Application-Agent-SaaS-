@@ -32,15 +32,6 @@ async function handleJobSearch(request: Request) {
   const userId = data.claims.sub as string
   const body = (await request.json()) as JobDiscoverRequest
 
-  const safeFilters = body.filters ?? {
-    jobTypes: [],
-    workModes: [],
-    location: undefined,
-    experienceLevel: undefined,
-    salaryMin: undefined,
-    postedWithin: undefined,
-  }
-
   const sanitizedRole = sanitizeTargetRole(body.targetRole)
   if (!sanitizedRole) {
     return NextResponse.json(
@@ -69,6 +60,16 @@ async function handleJobSearch(request: Request) {
     )
   }
 
+  const location = body.filters?.location?.trim() || profile.profile.location?.trim() || "India"
+  const safeFilters = {
+    jobTypes: body.filters?.jobTypes ?? [],
+    workModes: body.filters?.workModes ?? [],
+    location,
+    experienceLevel: body.filters?.experienceLevel ?? undefined,
+    salaryMin: body.filters?.salaryMin ?? undefined,
+    postedWithin: body.filters?.postedWithin ?? undefined,
+  }
+
   const result = await discoverJobs(supabase, userId, profile, {
     targetRole: sanitizedRole,
     platforms: body.platforms ?? [],
@@ -85,8 +86,9 @@ async function handleJobSearch(request: Request) {
       {
         ...body,
         targetRole: sanitizedRole,
+        filters: safeFilters,
       },
-      profile.profile.location,
+      location,
       Date.now() - startedAt
     )
   )

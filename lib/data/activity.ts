@@ -23,7 +23,7 @@ export async function getRecentJobActivity(
   const [profileRes, savedRes, appliedRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("resume_parsed_at, updated_at")
+      .select("updated_at")
       .eq("id", userId)
       .single(),
     supabase
@@ -45,13 +45,13 @@ export async function getRecentJobActivity(
   const raw: Array<JobActivityItem & { sortDate: string }> = []
 
   const profile = profileRes.data
-  if (profile?.resume_parsed_at) {
+  if (profile?.updated_at) {
     raw.push({
       id: "resume-analyzed",
       label: "Resume analyzed & profile synced",
-      timestamp: formatActivityDate(profile.resume_parsed_at),
+      timestamp: formatActivityDate(profile.updated_at),
       type: "resume",
-      sortDate: profile.resume_parsed_at,
+      sortDate: profile.updated_at,
     })
   }
 

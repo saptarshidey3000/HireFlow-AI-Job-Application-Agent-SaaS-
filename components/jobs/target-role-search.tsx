@@ -21,7 +21,9 @@ export function TargetRoleSearch({
 }) {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    onSearch()
+    if (value.trim()) {
+      onSearch()
+    }
   }
 
   return (
@@ -41,7 +43,7 @@ export function TargetRoleSearch({
           id="target-role"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Frontend Developer"
+          placeholder="e.g. Software Engineer"
           className="h-11 flex-1 border-[#333333] bg-[rgba(13,59,46,0.25)] text-white placeholder:text-[#707070]"
         />
         <Button

@@ -98,14 +98,59 @@ function inferJobType(text: string): JobType | null {
 
 function inferWorkMode(text: string): WorkMode | null {
   const combined = text.toLowerCase()
-  if (/\bremote\b|\bwork from home\b|\bwfh\b|\banywhere\b/.test(combined)) {
+
+  // Check hybrid first
+  if (/\bhybrid\b/.test(combined)) {
+    return "hybrid"
+  }
+
+  // Strong remote signals
+  if (
+    /\b(fully\s+remote|100%\s+remote|remote\s*[-–,]\s*india|remote\s+in\s+india|work\s+from\s+home|wfh|work\s+from\s+anywhere|remote\s+anywhere|remotely|remote\s+work|remote\s+option|anywhere\s+in\s+india|remote)\b/i.test(
+      combined
+    )
+  ) {
     return "remote"
   }
-  if (/\bhybrid\b/.test(combined)) return "hybrid"
-  if (/\bonsite\b|\bon-site\b|\bin office\b|\bon campus\b/.test(combined)) {
+
+  if (/\b(on[-\s]?site|in[-\s]?office|office[-\s]?based|on[-\s]?campus)\b/i.test(combined)) {
     return "onsite"
   }
+
   return null
+}
+
+function extractLocationFromText(text: string, defaultLocation = "India"): string {
+  const combined = text.toLowerCase()
+
+  const cities = [
+    { name: "Bengaluru, India", regex: /\b(bengaluru|bangalore)\b/i },
+    { name: "Mumbai, India", regex: /\bmumbai\b/i },
+    { name: "Delhi NCR, India", regex: /\b(delhi|new delhi|noida|gurgaon|gurugram|ncr)\b/i },
+    { name: "Hyderabad, India", regex: /\bhyderabad\b/i },
+    { name: "Pune, India", regex: /\bpune\b/i },
+    { name: "Chennai, India", regex: /\bchennai\b/i },
+    { name: "Kolkata, India", regex: /\bkolkata\b/i },
+    { name: "Ahmedabad, India", regex: /\bahmedabad\b/i },
+    { name: "Kochi, India", regex: /\bkochi\b/i },
+    { name: "Jaipur, India", regex: /\bjaipur\b/i },
+    { name: "Chandigarh, India", regex: /\bchandigarh\b/i },
+    { name: "Indore, India", regex: /\bindore\b/i },
+    { name: "India", regex: /\bindia\b/i },
+    { name: "United States", regex: /\b(united states|usa|san francisco|new york|austin|seattle)\b/i },
+    { name: "United Kingdom", regex: /\b(united kingdom|london|uk)\b/i },
+    { name: "Canada", regex: /\b(canada|toronto|vancouver)\b/i },
+    { name: "Germany", regex: /\b(germany|berlin|munich)\b/i },
+    { name: "Singapore", regex: /\bsingapore\b/i },
+  ]
+
+  for (const item of cities) {
+    if (item.regex.test(combined)) {
+      return item.name
+    }
+  }
+
+  return defaultLocation
 }
 
 function isBlockedDomain(url: string): boolean {
@@ -154,7 +199,7 @@ export function normalizeGoogleOrganicResult(
 
   const snippet = result.snippet?.trim() || ""
 
-  // Lightweight validation layer (Requirement 10)
+  // Lightweight validation layer
   if (!isLikelyJobPosting({ title, snippet, url })) {
     return null
   }
@@ -165,12 +210,14 @@ export function normalizeGoogleOrganicResult(
   const combined = `${title} ${snippet}`
   const publication = parsePublishedDateFromText(snippet)
   const company = extractCompanyFromTitle(title, source)
+  const workMode = inferWorkMode(combined)
+  const location = extractLocationFromText(combined, "India")
 
   return {
     jobId: null,
     title,
     company,
-    location: null,
+    location,
     source,
     platform,
     url,
@@ -183,7 +230,7 @@ export function normalizeGoogleOrganicResult(
     publishedAtText: publication.publishedAtText,
     companyLogo: null,
     jobType: inferJobType(combined),
-    workMode: inferWorkMode(combined),
+    workMode,
     experienceLevel: null,
     salary: null,
     isListingPage: isListing,

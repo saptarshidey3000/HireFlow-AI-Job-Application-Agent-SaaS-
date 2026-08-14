@@ -5,6 +5,28 @@ export interface SerpLocationConfig {
   hl: string
 }
 
+const INDIAN_CITIES = [
+  "bengaluru",
+  "bangalore",
+  "mumbai",
+  "delhi",
+  "new delhi",
+  "ncr",
+  "hyderabad",
+  "pune",
+  "chennai",
+  "kolkata",
+  "gurgaon",
+  "gurugram",
+  "noida",
+  "ahmedabad",
+  "jaipur",
+  "kochi",
+  "coimbatore",
+  "chandigarh",
+  "indore",
+]
+
 const LOCATION_MAP: Record<string, SerpLocationConfig> = {
   india: {
     location: "India",
@@ -79,6 +101,17 @@ export function resolveSerpLocationConfig(
   const key = raw.toLowerCase()
   if (LOCATION_MAP[key]) {
     return LOCATION_MAP[key]
+  }
+
+  // Check known Indian cities
+  if (INDIAN_CITIES.some((city) => key.includes(city))) {
+    const loc = key.includes("india") ? raw : `${raw}, India`
+    return {
+      location: loc,
+      gl: "in",
+      google_domain: "google.co.in",
+      hl: "en",
+    }
   }
 
   for (const [needle, config] of Object.entries(LOCATION_MAP)) {

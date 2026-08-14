@@ -150,21 +150,9 @@ export async function discoverJobs(
   request: JobDiscoverRequest
 ): Promise<JobDiscoverResponse> {
   const targetRole = sanitizeTargetRole(request.targetRole)
-  const safeFilters: JobFilters = request.filters ?? {
-    jobTypes: [],
-    workModes: [],
-    location: undefined,
-    experienceLevel: undefined,
-    salaryMin: undefined,
-    postedWithin: undefined,
-  }
-
   const sortMode: JobSortMode = request.sortMode ?? "latest"
-  const selectedPlatforms =
-    request.platforms && request.platforms.length > 0
-      ? request.platforms
-      : MULTI_SOURCE_PLATFORMS
 
+  // If targetRole is empty, DO NOT search. Return empty list immediately.
   if (!targetRole) {
     return {
       jobs: [],
@@ -176,6 +164,22 @@ export async function discoverJobs(
     }
   }
 
+  const safeLocation = request.filters?.location?.trim() || "India"
+  const safeFilters: JobFilters = {
+    jobTypes: request.filters?.jobTypes ?? [],
+    workModes: request.filters?.workModes ?? [],
+    location: safeLocation,
+    experienceLevel: request.filters?.experienceLevel ?? undefined,
+    salaryMin: request.filters?.salaryMin ?? undefined,
+    postedWithin: request.filters?.postedWithin ?? undefined,
+  }
+
+  const isRemote = safeFilters.workModes.includes("remote")
+  const selectedPlatforms =
+    request.platforms && request.platforms.length > 0
+      ? request.platforms
+      : MULTI_SOURCE_PLATFORMS
+
   const context = buildProfileJobContext(profile, {
     targetRole,
     workModes: safeFilters.workModes,
@@ -183,12 +187,13 @@ export async function discoverJobs(
 
   const locationConfig = resolveSerpLocationConfig(
     safeFilters.location,
-    context.location
+    context.location || "India"
   )
 
   const searchKey = buildSearchKey({
     targetRole,
     location: locationConfig.location,
+    remote: isRemote,
     platforms: selectedPlatforms,
     filters: safeFilters,
     jobTypes: safeFilters.jobTypes,
@@ -214,10 +219,15 @@ export async function discoverJobs(
     }
   }
 
-  const query = buildJobSearchQuery(targetRole)
+  const query = buildJobSearchQuery(targetRole, {
+    location: locationConfig.location,
+    remote: isRemote,
+  })
 
-  // Server-side logging only (Requirement 26). Never log SERPAPI_API_KEY.
-  console.log(`[Job Search]\nTarget Role: ${targetRole}\nQuery: ${query}`)
+  // Server-side logging only. Never log SERPAPI_API_KEY.
+  console.log(
+    `[Job Search]\nTarget Role: ${targetRole}\nLocation: ${locationConfig.location}\nRemote: ${isRemote}\nQuery: ${query}`
+  )
 
   const start = request.nextPageToken ? Number(request.nextPageToken) || 0 : 0
 

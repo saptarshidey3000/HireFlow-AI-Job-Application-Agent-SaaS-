@@ -41,6 +41,7 @@ export function JobList({
   onChangePlatforms: () => void
 }) {
   const showInitialLoading = loading && jobs.length === 0
+  const isRoleEmpty = !targetRole.trim()
   const showEmpty = !loading && !searching && !error && jobs.length === 0
 
   if (showInitialLoading) {
@@ -59,15 +60,25 @@ export function JobList({
   }
 
   if (showEmpty) {
+    if (isRoleEmpty) {
+      return (
+        <JobsEmptyState
+          title="Enter a target role to find matching jobs."
+          message="Type a role like Frontend Developer or Software Engineer above to search across top platforms with AI-powered resume matching."
+          showActions={false}
+          onClearFilters={onClearFilters}
+          onChangePlatforms={onChangePlatforms}
+        />
+      )
+    }
+
     return (
       <JobsEmptyState
+        title="No jobs found for this search."
+        message="Try another target role, adjust your filters, or select different job platforms."
+        showActions={true}
         onClearFilters={onClearFilters}
         onChangePlatforms={onChangePlatforms}
-        message={
-          targetRole.trim()
-            ? "No jobs found for this search. Try another target role or adjust your filters."
-            : "Enter a target role above to search for resume-matched jobs."
-        }
       />
     )
   }
