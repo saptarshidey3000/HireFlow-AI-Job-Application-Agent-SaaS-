@@ -5,6 +5,7 @@ import {
   Building2,
   Globe2,
   GraduationCap,
+  Layers3,
   Link2,
   Rocket,
   Search,
@@ -19,6 +20,7 @@ const PLATFORM_ICONS: Record<
   React.ComponentType<{ className?: string }>
 > = {
   greenhouse: Building2,
+  lever: Layers3,
   upwork: Briefcase,
   workable: Globe2,
   wellfound: Rocket,

@@ -8,12 +8,11 @@ import type {
 } from "@/lib/jobs/types"
 
 const WEIGHTS = {
-  role: 30,
+  role: 35,
   skills: 30,
   technology: 20,
   experience: 10,
   location: 5,
-  jobType: 5,
 } as const
 
 function normalizeTerm(value: string): string {
@@ -232,8 +231,7 @@ export function calculateResumeMatch(
       skillsScore * WEIGHTS.skills +
       techScore * WEIGHTS.technology +
       experience.score * WEIGHTS.experience +
-      location.score * WEIGHTS.location +
-      jobType.score * WEIGHTS.jobType
+      location.score * WEIGHTS.location
   )
 
   const matchDetails: JobMatchDetails = {

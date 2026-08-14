@@ -9,6 +9,7 @@ const JOB_TYPE_LABELS: Record<JobTypeFilter, string> = {
   "full-time": "Full Time",
   "part-time": "Part Time",
   internship: "Internship",
+  contract: "Contract",
 }
 
 const WORK_MODE_LABELS: Record<WorkModeFilter, string> = {
