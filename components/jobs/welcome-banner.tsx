@@ -27,8 +27,8 @@ export function WelcomeBanner({
           Here are the opportunities that match your profile.
         </p>
         <p className="mt-2 max-w-2xl text-sm text-[#707070]">
-          Search by target role and we&apos;ll match jobs from Google Jobs and
-          selected platforms against your resume.
+          Search by target role and we&apos;ll discover verified job openings from
+          top platforms matched directly against your profile.
         </p>
         <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(63,169,138,0.25)] bg-[rgba(13,59,46,0.35)] px-3 py-1.5 text-xs text-[#3FA98A]">
           <Sparkles className="size-3.5" />

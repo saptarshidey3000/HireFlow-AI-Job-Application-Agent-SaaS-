@@ -6,18 +6,13 @@ import { calculateResumeMatch } from "@/lib/jobs/matching"
 import { buildProfileJobContext } from "@/lib/jobs/profile-context"
 import {
   buildJobSearchQuery,
-  buildPlatformFallbackQueries,
   buildSearchKey,
+  sanitizeTargetRole,
 } from "@/lib/jobs/query-builder"
 import { jobMatchesFilters } from "@/lib/jobs/normalizer"
-import {
-  searchGoogleJobs,
-  searchGoogleOrganic,
-  SerpApiSearchError,
-} from "@/lib/jobs/serpapi-client"
+import { searchGoogleOrganic, SerpApiSearchError } from "@/lib/jobs/serpapi-client"
 import {
   dedupeSerpJobs,
-  normalizeGoogleJobsResult,
   normalizeGoogleOrganicResult,
   type NormalizedSerpJob,
 } from "@/lib/jobs/serpapi-normalizer"
@@ -25,6 +20,7 @@ import { sortJobs } from "@/lib/jobs/sorting"
 import type {
   JobDiscoverRequest,
   JobDiscoverResponse,
+  JobFilters,
   JobMatchDetails,
   JobPlatform,
   JobRecord,
@@ -57,101 +53,46 @@ function filterNormalizedByPlatform(
   )
 }
 
-function countPlatforms(jobs: NormalizedSerpJob[]): Record<string, number> {
-  const counts: Record<string, number> = {}
-  for (const job of jobs) {
-    if (job.platform === "unknown") continue
-    counts[job.platform] = (counts[job.platform] ?? 0) + 1
-  }
-  return counts
-}
-
+/**
+ * Runs the single verified SerpApi search strategy (engine=google against organic_results).
+ */
 async function fetchSerpJobs(
-  request: JobDiscoverRequest,
-  context: ReturnType<typeof buildProfileJobContext>,
-  locationConfig: ReturnType<typeof resolveSerpLocationConfig>,
   query: string,
+  locationConfig: ReturnType<typeof resolveSerpLocationConfig>,
   selectedPlatforms: JobPlatform[],
+  start: number,
   noCache: boolean
-): Promise<{
-  jobs: NormalizedSerpJob[]
-  nextPageToken: string | null
-}> {
-  let googleJobsResponse: Awaited<ReturnType<typeof searchGoogleJobs>>
+): Promise<{ jobs: NormalizedSerpJob[]; resultCount: number }> {
+  let response: Awaited<ReturnType<typeof searchGoogleOrganic>>
 
   try {
-    googleJobsResponse = await searchGoogleJobs({
+    response = await searchGoogleOrganic({
       q: query,
       location: locationConfig.location,
       gl: locationConfig.gl,
       google_domain: locationConfig.google_domain,
       hl: locationConfig.hl,
+      start: start > 0 ? start : undefined,
       noCache,
-      nextPageToken: request.nextPageToken,
     })
   } catch (error) {
     if (error instanceof SerpApiSearchError && error.code === "NO_RESULTS") {
-      googleJobsResponse = { jobs_results: [] }
+      response = { organic_results: [] }
     } else {
       throw error
     }
   }
 
-  const primaryJobs = (googleJobsResponse.jobs_results ?? [])
-    .map(normalizeGoogleJobsResult)
+  const organicResults = response.organic_results ?? []
+
+  const normalized = organicResults
+    .map((result) => normalizeGoogleOrganicResult(result))
     .filter((job): job is NormalizedSerpJob => job !== null)
 
-  const platformCounts = countPlatforms(primaryJobs)
-  const underrepresented = selectedPlatforms.filter(
-    (platform) => (platformCounts[platform] ?? 0) < 1
-  )
+  const deduped = dedupeSerpJobs(normalized)
+  const filtered = filterNormalizedByPlatform(deduped, selectedPlatforms)
 
-  const fallbackJobs: NormalizedSerpJob[] = []
-
-  if (underrepresented.length > 0 && !request.nextPageToken) {
-    const fallbackQueries = buildPlatformFallbackQueries(
-      underrepresented,
-      request.targetRole.trim(),
-      locationConfig.location
-    )
-
-    const fallbackResponses = await Promise.all(
-      fallbackQueries.map(async ({ platform, query: fallbackQuery }) => {
-        try {
-          const response = await searchGoogleOrganic({
-            q: fallbackQuery,
-            location: locationConfig.location,
-            gl: locationConfig.gl,
-            google_domain: locationConfig.google_domain,
-            hl: locationConfig.hl,
-            noCache,
-          })
-
-          return (response.organic_results ?? [])
-            .map((result) => normalizeGoogleOrganicResult(result, platform))
-            .filter((job): job is NormalizedSerpJob => job !== null)
-        } catch (error) {
-          console.error(
-            `[jobs/serpapi] fallback failed for ${platform}`,
-            error instanceof Error ? error.message : error
-          )
-          return []
-        }
-      })
-    )
-
-    fallbackJobs.push(...fallbackResponses.flat())
-  }
-
-  const merged = dedupeSerpJobs([
-    ...filterNormalizedByPlatform(primaryJobs, selectedPlatforms),
-    ...filterNormalizedByPlatform(fallbackJobs, selectedPlatforms),
-  ])
-
-  return {
-    jobs: merged,
-    nextPageToken: googleJobsResponse.serpapi_pagination?.next_page_token ?? null,
-  }
+  return { jobs: filtered, resultCount: organicResults.length }
 }
 
 function toJobRecords(
@@ -178,7 +119,7 @@ function toJobRecords(
     )
 
     return {
-      platform: job.platform === "unknown" ? "google_jobs" : job.platform,
+      platform: job.platform === "unknown" ? "unknown" : job.platform,
       title: job.title,
       company: job.company,
       company_logo: job.companyLogo,
@@ -208,10 +149,21 @@ export async function discoverJobs(
   profile: FullProfile,
   request: JobDiscoverRequest
 ): Promise<JobDiscoverResponse> {
-  const targetRole = request.targetRole.trim()
+  const targetRole = sanitizeTargetRole(request.targetRole)
+  const safeFilters: JobFilters = request.filters ?? {
+    jobTypes: [],
+    workModes: [],
+    location: undefined,
+    experienceLevel: undefined,
+    salaryMin: undefined,
+    postedWithin: undefined,
+  }
+
   const sortMode: JobSortMode = request.sortMode ?? "latest"
   const selectedPlatforms =
-    request.platforms.length > 0 ? request.platforms : MULTI_SOURCE_PLATFORMS
+    request.platforms && request.platforms.length > 0
+      ? request.platforms
+      : MULTI_SOURCE_PLATFORMS
 
   if (!targetRole) {
     return {
@@ -226,26 +178,29 @@ export async function discoverJobs(
 
   const context = buildProfileJobContext(profile, {
     targetRole,
-    workModes: request.filters.workModes,
+    workModes: safeFilters.workModes,
   })
 
   const locationConfig = resolveSerpLocationConfig(
-    request.filters.location,
+    safeFilters.location,
     context.location
   )
 
-  const searchKey = buildSearchKey(
+  const searchKey = buildSearchKey({
     targetRole,
-    context,
-    selectedPlatforms,
-    request.filters
-  )
+    location: locationConfig.location,
+    platforms: selectedPlatforms,
+    filters: safeFilters,
+    jobTypes: safeFilters.jobTypes,
+    workModes: safeFilters.workModes,
+    experienceLevel: safeFilters.experienceLevel,
+  })
 
   if (!request.forceRefresh && !request.nextPageToken) {
     const cached = await getCachedJobs(supabase, userId, searchKey, sortMode)
     if (cached.jobs.length > 0 && cached.fetchedAt) {
       const filtered = filterJobsByPlatform(
-        jobMatchesFiltersOnly(cached.jobs, request),
+        jobMatchesFiltersOnly(cached.jobs, safeFilters),
         selectedPlatforms
       )
       return {
@@ -259,18 +214,18 @@ export async function discoverJobs(
     }
   }
 
-  const query = buildJobSearchQuery({
-    targetRole,
-    context,
-    filters: request.filters,
-  })
+  const query = buildJobSearchQuery(targetRole)
 
-  const { jobs: fetchedJobs, nextPageToken } = await fetchSerpJobs(
-    request,
-    context,
-    locationConfig,
+  // Server-side logging only (Requirement 26). Never log SERPAPI_API_KEY.
+  console.log(`[Job Search]\nTarget Role: ${targetRole}\nQuery: ${query}`)
+
+  const start = request.nextPageToken ? Number(request.nextPageToken) || 0 : 0
+
+  const { jobs: fetchedJobs, resultCount } = await fetchSerpJobs(
     query,
+    locationConfig,
     selectedPlatforms,
+    start,
     request.forceRefresh ?? false
   )
 
@@ -279,14 +234,14 @@ export async function discoverJobs(
     fetchedJobs,
     targetRole,
     context,
-    request,
+    { ...request, filters: safeFilters },
     discoveredAt
   ).filter((job) =>
     jobMatchesFilters(
       (job.job_type as JobType | null) ?? null,
       (job.work_mode as WorkMode | null) ?? null,
-      request.filters.jobTypes,
-      request.filters.workModes
+      safeFilters.jobTypes,
+      safeFilters.workModes
     )
   )
 
@@ -336,9 +291,11 @@ export async function discoverJobs(
   }
 
   const filtered = filterJobsByPlatform(
-    jobMatchesFiltersOnly(saved, request),
+    jobMatchesFiltersOnly(saved, safeFilters),
     selectedPlatforms
   )
+
+  const hasMore = resultCount >= 10
 
   return {
     jobs: sortJobs(filtered, sortMode, targetRole),
@@ -346,8 +303,8 @@ export async function discoverJobs(
     fetchedAt: saved[0]?.fetched_at ?? discoveredAt,
     sortMode,
     pagination: {
-      hasMore: Boolean(nextPageToken),
-      nextPageToken,
+      hasMore,
+      nextPageToken: hasMore ? String(start + 10) : null,
     },
     total: filtered.length,
   }
@@ -355,14 +312,14 @@ export async function discoverJobs(
 
 function jobMatchesFiltersOnly(
   jobs: JobRecord[],
-  request: JobDiscoverRequest
+  filters: JobFilters
 ): JobRecord[] {
   return jobs.filter((job) =>
     jobMatchesFilters(
       job.job_type,
       job.work_mode,
-      request.filters.jobTypes,
-      request.filters.workModes
+      filters.jobTypes,
+      filters.workModes
     )
   )
 }
@@ -374,16 +331,16 @@ export function toJobSearchApiResponse(
   searchTimeMs: number
 ): JobSearchApiResponse {
   const location =
-    request.filters.location?.trim() || profileLocation || "United States"
+    request.filters?.location?.trim() || profileLocation || "India"
 
   return {
     success: true,
     jobs: result.jobs,
     total: result.total,
     search: {
-      targetRole: request.targetRole.trim(),
+      targetRole: sanitizeTargetRole(request.targetRole),
       location,
-      platforms: (request.platforms.length > 0
+      platforms: (request.platforms && request.platforms.length > 0
         ? request.platforms
         : MULTI_SOURCE_PLATFORMS
       ).map((platform) => getPlatformConfig(platform).name),

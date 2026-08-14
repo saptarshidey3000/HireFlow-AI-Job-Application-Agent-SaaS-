@@ -32,6 +32,17 @@ const EMPTY_FILTERS: JobFilters = {
   postedWithin: "",
 }
 
+function mergeJobs(existing: JobRecord[], incoming: JobRecord[]): JobRecord[] {
+  const map = new Map<string, JobRecord>()
+  for (const job of existing) {
+    map.set(job.job_url, job)
+  }
+  for (const job of incoming) {
+    map.set(job.job_url, job)
+  }
+  return Array.from(map.values())
+}
+
 export function JobsPageClient({
   profile,
   activity,
@@ -59,11 +70,12 @@ export function JobsPageClient({
   const [toast, setToast] = useState<string | null>(null)
   const [nextPageToken, setNextPageToken] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
+
   const platformRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const skipDebounceRef = useRef(false)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
+  const isMountedRef = useRef(false)
 
   const sortedJobs = useMemo(
     () => sortJobs(jobs, sortMode, activeTargetRole),
@@ -81,21 +93,25 @@ export function JobsPageClient({
     return counts
   }, [sortedJobs])
 
-  const fetchJobs = useCallback(
+  const executeSearch = useCallback(
     async (
-      targetRole: string,
+      roleToSearch: string,
+      currentPlatforms: JobPlatform[],
+      currentFilters: JobFilters,
       options?: {
         forceRefresh?: boolean
         append?: boolean
         pageToken?: string | null
       }
     ) => {
-      const trimmedRole = targetRole.trim()
+      const trimmedRole = roleToSearch.trim()
       if (!trimmedRole) {
         setJobs([])
         setLoading(false)
         setSearching(false)
         setError(null)
+        setHasMore(false)
+        setNextPageToken(null)
         return
       }
 
@@ -113,8 +129,9 @@ export function JobsPageClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             targetRole: trimmedRole,
-            platforms,
-            filters,
+            platforms: currentPlatforms,
+            filters: currentFilters,
+            sortMode,
             forceRefresh: options?.forceRefresh ?? false,
             nextPageToken: options?.pageToken ?? undefined,
             append: options?.append ?? false,
@@ -129,13 +146,13 @@ export function JobsPageClient({
         }
 
         if (!response.ok || !data.success) {
-          setError(
-            data.success
-              ? "Unable to fetch jobs right now."
-              : data.error.message
-          )
+          const errorMessage = !data.success
+            ? data.error?.message
+            : "Unable to fetch jobs right now."
+
+          setError(errorMessage || "Unable to fetch jobs right now.")
           if (!options?.append) {
-            // Keep previous successful list visible during provider errors.
+            setJobs([])
           }
           return
         }
@@ -143,8 +160,8 @@ export function JobsPageClient({
         setJobs((prev) =>
           options?.append ? mergeJobs(prev, data.jobs) : data.jobs
         )
-        setHasMore(data.pagination.hasMore)
-        setNextPageToken(data.pagination.nextPageToken)
+        setHasMore(data.pagination?.hasMore ?? false)
+        setNextPageToken(data.pagination?.nextPageToken ?? null)
         setError(null)
       } catch (fetchError) {
         if (fetchError instanceof Error && fetchError.name === "AbortError") {
@@ -152,6 +169,9 @@ export function JobsPageClient({
         }
         if (requestId === requestIdRef.current) {
           setError("Unable to fetch jobs right now.")
+          if (!options?.append) {
+            setJobs([])
+          }
         }
       } finally {
         if (requestId === requestIdRef.current) {
@@ -160,33 +180,114 @@ export function JobsPageClient({
         }
       }
     },
-    [platforms, filters]
+    [sortMode]
   )
 
-  const handleSearch = useCallback(() => {
+  // Initial search on mount
+  useEffect(() => {
+    if (isMountedRef.current) return
+    isMountedRef.current = true
+
+    void executeSearch(defaultRole, DEFAULT_PLATFORMS, {
+      ...EMPTY_FILTERS,
+      location: defaultLocation,
+    })
+  }, [defaultRole, defaultLocation, executeSearch])
+
+  // Handle typing in search input with 350ms debounce
+  const handleRoleInputChange = useCallback(
+    (newRole: string) => {
+      setTargetRoleDraft(newRole)
+
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+
+      debounceRef.current = setTimeout(() => {
+        const trimmed = newRole.trim()
+        if (trimmed) {
+          setActiveTargetRole(trimmed)
+          void executeSearch(trimmed, platforms, filters)
+        }
+      }, 350)
+    },
+    [platforms, filters, executeSearch]
+  )
+
+  // Handle explicit form submission / Search button click
+  const handleSearchSubmit = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+      debounceRef.current = null
+    }
+
     const nextRole = targetRoleDraft.trim()
     if (!nextRole) return
 
-    skipDebounceRef.current = true
     setActiveTargetRole(nextRole)
-    void fetchJobs(nextRole, { forceRefresh: false })
-  }, [fetchJobs, targetRoleDraft])
+    void executeSearch(nextRole, platforms, filters)
+  }, [targetRoleDraft, platforms, filters, executeSearch])
 
-  useEffect(() => {
-    if (skipDebounceRef.current) {
-      skipDebounceRef.current = false
-      return
+  // Handle platform changes (immediate update)
+  const handlePlatformsChange = useCallback(
+    (nextPlatforms: JobPlatform[]) => {
+      setPlatforms(nextPlatforms)
+
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+        debounceRef.current = null
+      }
+
+      const role = targetRoleDraft.trim() || activeTargetRole.trim()
+      if (role) {
+        setActiveTargetRole(role)
+        void executeSearch(role, nextPlatforms, filters)
+      }
+    },
+    [targetRoleDraft, activeTargetRole, filters, executeSearch]
+  )
+
+  // Handle filter changes (immediate update)
+  const handleFiltersChange = useCallback(
+    (nextFilters: JobFilters) => {
+      setFilters(nextFilters)
+
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+        debounceRef.current = null
+      }
+
+      const role = targetRoleDraft.trim() || activeTargetRole.trim()
+      if (role) {
+        setActiveTargetRole(role)
+        void executeSearch(role, platforms, nextFilters)
+      }
+    },
+    [targetRoleDraft, activeTargetRole, platforms, executeSearch]
+  )
+
+  const handleClearFilters = useCallback(() => {
+    const cleared: JobFilters = { ...EMPTY_FILTERS, location: defaultLocation }
+    handleFiltersChange(cleared)
+  }, [defaultLocation, handleFiltersChange])
+
+  const handleRefresh = useCallback(() => {
+    const role = activeTargetRole.trim() || targetRoleDraft.trim()
+    if (role) {
+      void executeSearch(role, platforms, filters, { forceRefresh: true })
     }
+  }, [activeTargetRole, targetRoleDraft, platforms, filters, executeSearch])
 
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      void fetchJobs(activeTargetRole, { forceRefresh: false })
-    }, 350)
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
+  const handleLoadMore = useCallback(() => {
+    if (!nextPageToken) return
+    const role = activeTargetRole.trim() || targetRoleDraft.trim()
+    if (role) {
+      void executeSearch(role, platforms, filters, {
+        append: true,
+        pageToken: nextPageToken,
+      })
     }
-  }, [activeTargetRole, fetchJobs])
+  }, [nextPageToken, activeTargetRole, targetRoleDraft, platforms, filters, executeSearch])
 
   useEffect(() => {
     if (!toast) return
@@ -194,20 +295,8 @@ export function JobsPageClient({
     return () => clearTimeout(timer)
   }, [toast])
 
-  const handleClearFilters = () => {
-    setFilters({ ...EMPTY_FILTERS, location: defaultLocation })
-  }
-
   const scrollToPlatforms = () => {
     platformRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-  }
-
-  const handleLoadMore = () => {
-    if (!nextPageToken) return
-    void fetchJobs(activeTargetRole, {
-      append: true,
-      pageToken: nextPageToken,
-    })
   }
 
   return (
@@ -216,22 +305,22 @@ export function JobsPageClient({
 
       <TargetRoleSearch
         value={targetRoleDraft}
-        onChange={setTargetRoleDraft}
-        onSearch={handleSearch}
+        onChange={handleRoleInputChange}
+        onSearch={handleSearchSubmit}
         loading={searching}
       />
 
       <div ref={platformRef}>
         <PlatformSelector
           selected={platforms}
-          onChange={setPlatforms}
+          onChange={handlePlatformsChange}
           counts={platformCounts}
         />
       </div>
 
       <JobFiltersPanel
         filters={filters}
-        onChange={setFilters}
+        onChange={handleFiltersChange}
         onClear={handleClearFilters}
       />
 
@@ -245,8 +334,8 @@ export function JobsPageClient({
             targetRole={activeTargetRole}
             sortMode={sortMode}
             onSortChange={setSortMode}
-            onRetry={() => fetchJobs(activeTargetRole, { forceRefresh: true })}
-            onRefresh={() => fetchJobs(activeTargetRole, { forceRefresh: true })}
+            onRetry={handleRefresh}
+            onRefresh={handleRefresh}
             onLoadMore={handleLoadMore}
             hasMore={hasMore}
             onSavedChange={(updated) =>
@@ -278,15 +367,4 @@ export function JobsPageClient({
       ) : null}
     </div>
   )
-}
-
-function mergeJobs(existing: JobRecord[], incoming: JobRecord[]): JobRecord[] {
-  const map = new Map<string, JobRecord>()
-  for (const job of existing) {
-    map.set(job.job_url, job)
-  }
-  for (const job of incoming) {
-    map.set(job.job_url, job)
-  }
-  return Array.from(map.values())
 }

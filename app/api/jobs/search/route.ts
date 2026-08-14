@@ -5,6 +5,7 @@ import {
   toJobSearchApiError,
   toJobSearchApiResponse,
 } from "@/lib/jobs/discover"
+import { sanitizeTargetRole } from "@/lib/jobs/query-builder"
 import { SerpApiSearchError } from "@/lib/jobs/serpapi-client"
 import type { JobDiscoverRequest } from "@/lib/jobs/types"
 import { getJobSearchProfile } from "@/lib/data/profile"
@@ -31,7 +32,17 @@ async function handleJobSearch(request: Request) {
   const userId = data.claims.sub as string
   const body = (await request.json()) as JobDiscoverRequest
 
-  if (!body.targetRole?.trim()) {
+  const safeFilters = body.filters ?? {
+    jobTypes: [],
+    workModes: [],
+    location: undefined,
+    experienceLevel: undefined,
+    salaryMin: undefined,
+    postedWithin: undefined,
+  }
+
+  const sanitizedRole = sanitizeTargetRole(body.targetRole)
+  if (!sanitizedRole) {
     return NextResponse.json(
       {
         success: false,
@@ -59,12 +70,9 @@ async function handleJobSearch(request: Request) {
   }
 
   const result = await discoverJobs(supabase, userId, profile, {
-    targetRole: body.targetRole.trim(),
+    targetRole: sanitizedRole,
     platforms: body.platforms ?? [],
-    filters: body.filters ?? {
-      jobTypes: [],
-      workModes: [],
-    },
+    filters: safeFilters,
     sortMode: body.sortMode,
     forceRefresh: body.forceRefresh ?? false,
     nextPageToken: body.nextPageToken,
@@ -76,7 +84,7 @@ async function handleJobSearch(request: Request) {
       result,
       {
         ...body,
-        targetRole: body.targetRole.trim(),
+        targetRole: sanitizedRole,
       },
       profile.profile.location,
       Date.now() - startedAt
@@ -98,7 +106,7 @@ export async function POST(request: Request) {
     const status =
       error instanceof SerpApiSearchError
         ? error.code === "INVALID_REQUEST"
-          ? 401
+          ? 400
           : error.code === "RATE_LIMITED"
             ? 429
             : 503

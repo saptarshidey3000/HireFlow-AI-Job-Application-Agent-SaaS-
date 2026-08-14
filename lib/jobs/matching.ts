@@ -62,14 +62,13 @@ function pickCoreSkills(context: ProfileJobContext): string[] {
 }
 
 function pickTechnologies(context: ProfileJobContext): string[] {
-  const skillKeys = new Set(context.skills.map((skill) => normalizeTerm(skill)))
   const unique: string[] = []
   const seen = new Set<string>()
 
   for (const tech of context.techStack) {
     const trimmed = tech.trim()
     const key = normalizeTerm(trimmed)
-    if (!key || seen.has(key) || skillKeys.has(key)) continue
+    if (!key || seen.has(key)) continue
     seen.add(key)
     unique.push(trimmed)
   }
@@ -168,7 +167,9 @@ export function buildMatchReason(
     "matchedSkills" | "matchedTechnologies" | "experienceMatch" | "locationMatch"
   >
 ): string {
-  const highlights = [...details.matchedSkills, ...details.matchedTechnologies].slice(0, 4)
+  const highlights = Array.from(
+    new Set([...details.matchedSkills, ...details.matchedTechnologies])
+  ).slice(0, 4)
 
   if (highlights.length >= 2) {
     const skillList =

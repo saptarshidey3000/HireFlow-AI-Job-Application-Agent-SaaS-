@@ -1,147 +1,111 @@
 import { createHash } from "crypto"
 
-import { buildPlatformSiteRestriction } from "@/lib/jobs/platforms"
 import type {
   JobFilters,
   JobPlatform,
-  ProfileJobContext,
+  JobTypeFilter,
+  WorkModeFilter,
 } from "@/lib/jobs/types"
 
-const MAX_QUERY_LENGTH = 200
+const VERIFIED_PLATFORM_SITES =
+  "(site:wellfound.com OR site:internshala.com OR site:upwork.com OR site:indeed.com OR site:naukri.com OR site:greenhouse.io OR site:lever.co OR site:workable.com)"
 
-function normalizeWhitespace(value: string): string {
-  return value.replace(/\s+/g, " ").trim()
-}
+const VERIFIED_APPLY_SIGNALS = '("Apply" OR "Apply Now" OR "Easy Apply")'
 
-function quoteTerm(term: string): string {
-  const trimmed = normalizeWhitespace(term)
-  if (!trimmed) return ""
-  return trimmed.includes(" ") ? `"${trimmed}"` : trimmed
-}
+const VERIFIED_EXCLUSIONS =
+  "-blog -article -articles -news -salary -course -interview -resume"
 
-function dedupeTerms(terms: string[]): string[] {
-  const seen = new Set<string>()
-  const result: string[] = []
+/**
+ * Normalizes and sanitizes the user's target role:
+ * - trims whitespace
+ * - collapses repeated whitespace
+ * - removes accidental surrounding single or double quotes
+ * - preserves multi-word roles
+ * - safely escapes any internal quotes or special characters
+ */
+export function sanitizeTargetRole(value: string | null | undefined): string {
+  if (!value || typeof value !== "string") return ""
 
-  for (const term of terms) {
-    const normalized = normalizeWhitespace(term).toLowerCase()
-    if (!normalized || seen.has(normalized)) continue
-    seen.add(normalized)
-    result.push(normalizeWhitespace(term))
+  let role = value.replace(/\s+/g, " ").trim()
+
+  // Strip accidental outer double or single quotes
+  while (
+    (role.startsWith('"') && role.endsWith('"')) ||
+    (role.startsWith("'") && role.endsWith("'"))
+  ) {
+    role = role.slice(1, -1).trim()
   }
 
-  return result
+  // Remove unsafe punctuation/tags while keeping alphanumeric, spaces, +, #, ., -, /
+  role = role.replace(/[<>[\]{}"]/g, "").replace(/\s+/g, " ").trim()
+
+  return role.slice(0, 100)
 }
 
-function selectRelevantSkills(
-  context: ProfileJobContext,
-  filters: JobFilters,
-  targetRole: string,
-  max = 8
-): string[] {
-  const roleTokens = new Set(
-    targetRole.toLowerCase().split(/[^a-z0-9+#.]+/).filter(Boolean)
-  )
+/**
+ * Builds the exact verified SerpApi Google Search query for the given target role.
+ *
+ * Pattern:
+ * ("<TARGET_ROLE>")
+ * (site:wellfound.com OR site:internshala.com OR site:upwork.com OR site:indeed.com OR site:naukri.com OR site:greenhouse.io OR site:lever.co OR site:workable.com)
+ * ("Apply" OR "Apply Now" OR "Easy Apply")
+ * -blog -article -articles -news -salary -course -interview -resume
+ */
+export function buildJobSearchQuery(targetRole: string): string {
+  const sanitizedRole = sanitizeTargetRole(targetRole)
+  if (!sanitizedRole) {
+    throw new Error("Target role cannot be empty")
+  }
 
-  const candidates = dedupeTerms([
-    ...(filters.skills ?? []),
-    ...context.topSkills,
-    ...context.techStack,
-    ...context.skills,
-  ])
-
-  return candidates
-    .filter((skill) => {
-      const lower = skill.toLowerCase()
-      return skill.length >= 2 && !roleTokens.has(lower)
-    })
-    .slice(0, max)
+  return `("${sanitizedRole}") ${VERIFIED_PLATFORM_SITES} ${VERIFIED_APPLY_SIGNALS} ${VERIFIED_EXCLUSIONS}`
 }
 
-export interface BuildJobSearchQueryInput {
+export interface BuildSearchKeyInput {
   targetRole: string
-  context: ProfileJobContext
-  filters: JobFilters
-}
-
-export function buildJobSearchQuery(input: BuildJobSearchQueryInput): string {
-  const { targetRole, context, filters } = input
-  const parts: string[] = [normalizeWhitespace(targetRole)]
-
-  for (const skill of selectRelevantSkills(context, filters, targetRole)) {
-    parts.push(skill)
-  }
-
-  if (filters.jobTypes.includes("internship")) {
-    parts.push("internship")
-  } else if (filters.jobTypes.includes("contract")) {
-    parts.push("contract")
-  } else if (filters.jobTypes.includes("part-time")) {
-    parts.push("part-time")
-  }
-
-  const level = filters.experienceLevel?.trim() || context.experienceLevel
-  if (/entry|junior|graduate|fresher|0-1|1 year/i.test(level)) {
-    parts.push("entry level")
-  } else if (/senior|lead|principal/i.test(level)) {
-    parts.push("senior")
-  }
-
-  if (filters.workModes.includes("remote") || context.prefersRemote) {
-    parts.push("remote")
-  }
-
-  let query = dedupeTerms(parts).join(" ")
-
-  if (query.length > MAX_QUERY_LENGTH) {
-    query = query.slice(0, MAX_QUERY_LENGTH).replace(/\s+\S*$/, "")
-  }
-
-  return query
-}
-
-export function buildPlatformFallbackQuery(
-  platform: JobPlatform,
-  targetRole: string,
   location?: string | null
-): string {
-  const parts = [buildPlatformSiteRestriction(platform), quoteTerm(targetRole)]
-
-  if (location?.trim()) {
-    parts.push(quoteTerm(location.trim()))
-  }
-
-  return normalizeWhitespace(parts.filter(Boolean).join(" "))
+  platforms?: (JobPlatform | string)[]
+  filters?: JobFilters
+  jobTypes?: JobTypeFilter[]
+  workModes?: WorkModeFilter[]
+  experienceLevel?: string | null
 }
 
-export function buildSearchKey(
-  targetRole: string,
-  context: ProfileJobContext,
-  platforms: JobPlatform[],
-  filters: JobFilters
-): string {
+/**
+ * Builds a deterministic cache key based on search parameters:
+ * - targetRole (normalized)
+ * - location (normalized)
+ * - selectedPlatforms (sorted, normalized)
+ * - jobTypes (sorted)
+ * - workModes / remotePreference (sorted)
+ * - experienceLevel (normalized)
+ */
+export function buildSearchKey(input: BuildSearchKeyInput): string {
+  const targetRole = sanitizeTargetRole(input.targetRole).toLowerCase()
+  const location = (input.location ?? input.filters?.location ?? "").trim().toLowerCase()
+  
+  const platforms = Array.from(
+    new Set((input.platforms ?? []).map((p) => String(p).toLowerCase().trim()).filter(Boolean))
+  ).sort()
+
+  const jobTypes = Array.from(
+    new Set((input.jobTypes ?? input.filters?.jobTypes ?? []).map((t) => String(t).toLowerCase().trim()).filter(Boolean))
+  ).sort()
+
+  const workModes = Array.from(
+    new Set((input.workModes ?? input.filters?.workModes ?? []).map((w) => String(w).toLowerCase().trim()).filter(Boolean))
+  ).sort()
+
+  const experienceLevel = (input.experienceLevel ?? input.filters?.experienceLevel ?? "").trim().toLowerCase()
+
   const payload = JSON.stringify({
-    targetRole: targetRole.trim().toLowerCase(),
-    location: filters.location?.trim() || context.location || "",
-    experienceLevel: filters.experienceLevel?.trim() || context.experienceLevel,
-    prefersRemote: context.prefersRemote,
-    platforms: [...platforms].sort(),
-    jobTypes: [...filters.jobTypes].sort(),
-    workModes: [...filters.workModes].sort(),
-    skills: selectRelevantSkills(context, filters, targetRole, 10).sort(),
-    provider: "serpapi",
+    targetRole,
+    location,
+    platforms,
+    jobTypes,
+    workModes,
+    experienceLevel,
+    provider: "serpapi_google_organic",
   })
 
   return createHash("sha256").update(payload).digest("hex").slice(0, 24)
-}
-
-export function buildPlatformFallbackQueries(
-  platforms: JobPlatform[],
-  targetRole: string,
-  location?: string | null
-): Array<{ platform: JobPlatform; query: string }> {
-  return platforms.map((platform) => ({
-    platform,
-    query: buildPlatformFallbackQuery(platform, targetRole, location),
-  }))
 }

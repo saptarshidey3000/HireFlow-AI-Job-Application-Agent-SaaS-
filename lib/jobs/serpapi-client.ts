@@ -24,27 +24,6 @@ export interface SerpApiPagination {
   next?: string
 }
 
-export interface GoogleJobsApiResult {
-  title?: string
-  company_name?: string
-  location?: string
-  via?: string
-  share_link?: string
-  thumbnail?: string
-  extensions?: string[]
-  detected_extensions?: {
-    posted_at?: string
-    schedule_type?: string
-    work_from_home?: boolean
-    salary?: string
-  }
-  description?: string
-  apply_options?: Array<{ title?: string; link?: string }>
-  job_id?: string
-  job_highlights?: Array<{ title?: string; items?: string[] }>
-  related_links?: Array<{ link?: string; text?: string }>
-}
-
 export interface GoogleOrganicApiResult {
   position?: number
   title?: string
@@ -54,15 +33,9 @@ export interface GoogleOrganicApiResult {
   source?: string
 }
 
-export interface SerpApiGoogleJobsResponse {
-  jobs_results?: GoogleJobsApiResult[]
-  serpapi_pagination?: SerpApiPagination
-  search_metadata?: { status?: string; id?: string }
-  error?: string
-}
-
 export interface SerpApiGoogleResponse {
   organic_results?: GoogleOrganicApiResult[]
+  serpapi_pagination?: SerpApiPagination
   search_metadata?: { status?: string; id?: string }
   error?: string
 }
@@ -81,7 +54,11 @@ function getApiKey(): string {
 function classifySerpApiError(message: string): SerpApiErrorCode {
   if (/rate limit/i.test(message)) return "RATE_LIMITED"
   if (/invalid.*api key|unauthorized|account/i.test(message)) return "INVALID_REQUEST"
-  if (/hasn't returned any results|no results found|did not match any documents/i.test(message)) {
+  if (
+    /hasn't returned any results|no results found|did not match any documents/i.test(
+      message
+    )
+  ) {
     return "NO_RESULTS"
   }
   return "SEARCH_PROVIDER_ERROR"
@@ -93,18 +70,17 @@ function isNoResultsMessage(message: string): boolean {
 
 function emptySerpApiPayload<T>(data: T & { error?: string }): T {
   const payload = data as T & {
-    jobs_results?: GoogleJobsApiResult[]
     organic_results?: GoogleOrganicApiResult[]
     error?: string
   }
 
   return {
     ...payload,
-    jobs_results: payload.jobs_results ?? [],
     organic_results: payload.organic_results ?? [],
     error: undefined,
   } as T
 }
+
 function mapHttpError(status: number): SerpApiSearchError {
   if (status === 401 || status === 403) {
     return new SerpApiSearchError(
@@ -171,53 +147,35 @@ async function serpApiGet<T>(
   } catch (error) {
     if (error instanceof SerpApiSearchError) throw error
     if (error instanceof Error && error.name === "AbortError") {
-      throw new SerpApiSearchError("SEARCH_PROVIDER_ERROR", "SerpApi request timed out.")
+      throw new SerpApiSearchError(
+        "SEARCH_PROVIDER_ERROR",
+        "SerpApi request timed out."
+      )
     }
-    throw new SerpApiSearchError("SEARCH_PROVIDER_ERROR", "SerpApi request failed.")
+    throw new SerpApiSearchError(
+      "SEARCH_PROVIDER_ERROR",
+      "SerpApi request failed."
+    )
   } finally {
     clearTimeout(timeout)
   }
 }
 
-export interface GoogleJobsSearchParams {
-  q: string
-  location: string
-  gl: string
-  google_domain: string
-  hl: string
-  noCache?: boolean
-  nextPageToken?: string
-  signal?: AbortSignal
-}
-
-export async function searchGoogleJobs(
-  params: GoogleJobsSearchParams
-): Promise<SerpApiGoogleJobsResponse> {
-  return serpApiGet<SerpApiGoogleJobsResponse>(
-    {
-      engine: "google_jobs",
-      q: params.q,
-      location: params.location,
-      gl: params.gl,
-      google_domain: params.google_domain,
-      hl: params.hl,
-      no_cache: params.noCache ? "true" : undefined,
-      next_page_token: params.nextPageToken,
-    },
-    params.signal
-  )
-}
-
 export interface GoogleOrganicSearchParams {
   q: string
-  location: string
-  gl: string
-  google_domain: string
-  hl: string
+  location?: string
+  gl?: string
+  google_domain?: string
+  hl?: string
+  start?: number
   noCache?: boolean
   signal?: AbortSignal
 }
 
+/**
+ * Runs the verified SerpApi search strategy: engine=google against
+ * organic_results with English default hl=en.
+ */
 export async function searchGoogleOrganic(
   params: GoogleOrganicSearchParams
 ): Promise<SerpApiGoogleResponse> {
@@ -225,11 +183,12 @@ export async function searchGoogleOrganic(
     {
       engine: "google",
       q: params.q,
-      location: params.location,
-      gl: params.gl,
-      google_domain: params.google_domain,
-      hl: params.hl,
+      location: params.location || "India",
+      gl: params.gl || "in",
+      google_domain: params.google_domain || "google.co.in",
+      hl: params.hl || "en",
       num: "10",
+      start: params.start ? String(params.start) : undefined,
       no_cache: params.noCache ? "true" : undefined,
     },
     params.signal

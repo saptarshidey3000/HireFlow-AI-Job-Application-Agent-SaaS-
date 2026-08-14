@@ -3,10 +3,10 @@
 import {
   Briefcase,
   Building2,
+  Compass,
   Globe2,
   GraduationCap,
   Layers3,
-  Link2,
   Rocket,
   Search,
 } from "lucide-react"
@@ -19,14 +19,14 @@ const PLATFORM_ICONS: Record<
   JobPlatform,
   React.ComponentType<{ className?: string }>
 > = {
-  greenhouse: Building2,
-  lever: Layers3,
-  upwork: Briefcase,
-  workable: Globe2,
   wellfound: Rocket,
   internshala: GraduationCap,
+  upwork: Briefcase,
   indeed: Search,
-  linkedin: Link2,
+  naukri: Compass,
+  greenhouse: Building2,
+  lever: Layers3,
+  workable: Globe2,
 }
 
 export function PlatformSelector({

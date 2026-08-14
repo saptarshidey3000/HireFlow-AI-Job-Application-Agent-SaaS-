@@ -48,12 +48,24 @@ const LOCATION_MAP: Record<string, SerpLocationConfig> = {
     google_domain: "google.com.au",
     hl: "en",
   },
+  germany: {
+    location: "Germany",
+    gl: "de",
+    google_domain: "google.de",
+    hl: "en",
+  },
+  singapore: {
+    location: "Singapore",
+    gl: "sg",
+    google_domain: "google.com.sg",
+    hl: "en",
+  },
 }
 
 const DEFAULT_CONFIG: SerpLocationConfig = {
-  location: "United States",
-  gl: "us",
-  google_domain: "google.com",
+  location: "India",
+  gl: "in",
+  google_domain: "google.co.in",
   hl: "en",
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { usePathname } from "next/navigation"
 
 import { OnboardingDialog } from "@/components/onboarding/onboarding-dialog"
@@ -23,11 +23,13 @@ export function DashboardLayout({
   const pathname = usePathname()
   const { collapsed, hydrated, toggleCollapsed } = useSidebarState()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [prevPathname, setPrevPathname] = useState(pathname)
   const showOnboarding = !onboarding.isComplete
 
-  useEffect(() => {
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname)
     setMobileOpen(false)
-  }, [pathname])
+  }
 
   return (
     <TooltipProvider delay={200}>

@@ -20,8 +20,15 @@ export function useSidebarState(defaultCollapsed = false) {
   useEffect(() => {
     const mqTablet = window.matchMedia("(min-width: 768px) and (max-width: 1023px)")
     const defaultValue = mqTablet.matches
-    setCollapsed(readCollapsed(defaultValue))
-    setHydrated(true)
+    const initial = readCollapsed(defaultValue)
+    
+    // Async tick to avoid synchronous setState inside effect body
+    const timer = setTimeout(() => {
+      setCollapsed(initial)
+      setHydrated(true)
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [])
 
   const toggleCollapsed = useCallback(() => {

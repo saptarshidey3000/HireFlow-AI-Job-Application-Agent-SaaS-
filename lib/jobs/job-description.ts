@@ -7,7 +7,7 @@ export {
   fetchJobPagePublicationDate,
 } from "@/lib/jobs/job-page-extract"
 
-export async function extractJobDescription(_url: string): Promise<string | null> {
+export async function extractJobDescription(): Promise<string | null> {
   return null
 }
 
