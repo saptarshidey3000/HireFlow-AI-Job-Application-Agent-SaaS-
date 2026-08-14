@@ -5,10 +5,8 @@ import {
   resolveSourceFromUrl,
 } from "@/lib/jobs/platforms"
 import { parsePublishedDateFromText } from "@/lib/jobs/published-date"
-import type {
-  GoogleJobsApiResult,
-  GoogleOrganicApiResult,
-} from "@/lib/jobs/serpapi-client"
+import { isLikelyJobPosting, isPlatformListingPage } from "@/lib/jobs/result-filter"
+import type { GoogleOrganicApiResult } from "@/lib/jobs/serpapi-client"
 import type { JobPlatform, JobType, WorkMode } from "@/lib/jobs/types"
 
 export interface NormalizedSerpJob {
@@ -22,6 +20,8 @@ export interface NormalizedSerpJob {
   applyUrl: string
   snippet: string
   description: string | null
+  position: number
+  displayedLink: string | null
   publishedAt: string | null
   publishedAtText: string | null
   companyLogo: string | null
@@ -42,29 +42,20 @@ const BLOCKED_DOMAINS = [
   "x.com",
   "tiktok.com",
   "pinterest.com",
+  "medium.com",
+  "quora.com",
 ]
 
-const LISTING_TITLE_PATTERNS = [
-  /\bsoftware developer jobs\b/i,
-  /\bsoftware development jobs\b/i,
-  /\bfresher\b.*\bjobs\b/i,
-  /\bwork from home jobs\b/i,
-  /\b\d+\+?\s*jobs\b/i,
-  /\bfind jobs\b/i,
-  /\bjob openings in\b/i,
-  /\bcareers at\b/i,
-]
-
-function detectPlatformFromVia(via: string | undefined): JobPlatform | "unknown" {
-  if (!via) return "unknown"
-  const lower = via.toLowerCase()
+function detectPlatformFromLabel(label: string | undefined): JobPlatform | "unknown" {
+  if (!label) return "unknown"
+  const lower = label.toLowerCase()
 
   const map: Array<[RegExp, JobPlatform]> = [
-    [/indeed/, "indeed"],
-    [/linkedin/, "linkedin"],
     [/wellfound|angel\.?co/, "wellfound"],
     [/internshala/, "internshala"],
     [/upwork/, "upwork"],
+    [/indeed/, "indeed"],
+    [/naukri/, "naukri"],
     [/greenhouse/, "greenhouse"],
     [/lever/, "lever"],
     [/workable/, "workable"],
@@ -78,14 +69,12 @@ function detectPlatformFromVia(via: string | undefined): JobPlatform | "unknown"
 }
 
 function resolvePlatform(
-  via: string | undefined,
   url: string,
   sourceLabel?: string
 ): { platform: JobPlatform | "unknown"; source: string } {
-  const fromVia = detectPlatformFromVia(via)
   const fromUrl = resolvePlatformFromUrl(url)
   const platform =
-    fromVia !== "unknown" ? fromVia : fromUrl !== "unknown" ? fromUrl : "unknown"
+    fromUrl !== "unknown" ? fromUrl : detectPlatformFromLabel(sourceLabel)
 
   if (platform !== "unknown") {
     try {
@@ -95,30 +84,11 @@ function resolvePlatform(
     }
   }
 
-  if (sourceLabel?.trim()) {
-    const fromSource = detectPlatformFromVia(sourceLabel)
-    if (fromSource !== "unknown") {
-      return { platform: fromSource, source: sourceLabel.trim() }
-    }
-  }
-
-  return { platform: "unknown", source: sourceLabel?.trim() || "Google Jobs" }
+  return { platform: "unknown", source: "Unknown" }
 }
 
-function pickApplyUrl(job: GoogleJobsApiResult): string {
-  const applyOption = job.apply_options?.find((item) => item.link?.trim())
-  if (applyOption?.link) return applyOption.link.trim()
-
-  const related = job.related_links?.find((item) => item.link?.trim())
-  if (related?.link) return related.link.trim()
-
-  if (job.share_link?.trim()) return job.share_link.trim()
-
-  return ""
-}
-
-function inferJobType(text: string, extensions?: string[]): JobType | null {
-  const combined = `${text} ${(extensions ?? []).join(" ")}`.toLowerCase()
+function inferJobType(text: string): JobType | null {
+  const combined = text.toLowerCase()
   if (/\bintern(ship)?\b/.test(combined)) return "internship"
   if (/\bpart[-\s]?time\b/.test(combined)) return "part-time"
   if (/\bcontract\b|\bfreelance\b/.test(combined)) return "contract"
@@ -126,12 +96,7 @@ function inferJobType(text: string, extensions?: string[]): JobType | null {
   return null
 }
 
-function inferWorkMode(
-  text: string,
-  detected?: GoogleJobsApiResult["detected_extensions"]
-): WorkMode | null {
-  if (detected?.work_from_home) return "remote"
-
+function inferWorkMode(text: string): WorkMode | null {
   const combined = text.toLowerCase()
   if (/\bremote\b|\bwork from home\b|\bwfh\b|\banywhere\b/.test(combined)) {
     return "remote"
@@ -143,25 +108,9 @@ function inferWorkMode(
   return null
 }
 
-function extractTags(job: GoogleJobsApiResult): string[] {
-  const tags = new Set<string>()
-
-  for (const ext of job.extensions ?? []) {
-    if (ext.trim()) tags.add(ext.trim())
-  }
-
-  for (const highlight of job.job_highlights ?? []) {
-    for (const item of highlight.items ?? []) {
-      if (item.trim()) tags.add(item.trim())
-    }
-  }
-
-  return Array.from(tags).slice(0, 8)
-}
-
 function isBlockedDomain(url: string): boolean {
   try {
-    const hostname = new URL(url).hostname.replace(/^www\./, "")
+    const hostname = new URL(url).hostname.toLowerCase().replace(/^www\./, "")
     return BLOCKED_DOMAINS.some(
       (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
     )
@@ -170,118 +119,74 @@ function isBlockedDomain(url: string): boolean {
   }
 }
 
-export function isListingPage(title: string, url: string, snippet: string): boolean {
-  const combined = `${title} ${snippet}`.toLowerCase()
-
-  if (LISTING_TITLE_PATTERNS.some((pattern) => pattern.test(combined))) {
-    return true
+function extractCompanyFromTitle(title: string, source: string): string | null {
+  // Common patterns: "Role - Company", "Role at Company", "Company hiring Role"
+  const atMatch = title.match(/\bat\s+([A-Za-z0-9\s.,&'-]+?)(?:\s*[-–|:]|$)/i)
+  if (atMatch?.[1]) {
+    const company = atMatch[1].trim()
+    if (company.length > 1 && company.length < 50) return company
   }
 
-  if (/\bjobs?\s+(in|near|at)\b/i.test(title)) {
-    return true
-  }
-
-  try {
-    const pathname = new URL(url).pathname.toLowerCase()
+  const dashParts = title.split(/\s[-–|]\s/)
+  if (dashParts.length >= 2) {
+    const candidate = dashParts[dashParts.length - 1].trim()
     if (
-      /\/jobs?\/?$/.test(pathname) ||
-      /\/search/.test(pathname) ||
-      /\/job-category/.test(pathname)
+      candidate &&
+      !candidate.toLowerCase().includes(source.toLowerCase()) &&
+      candidate.length < 40
     ) {
-      return true
+      return candidate
     }
-  } catch {
-    return false
   }
 
-  return false
+  return null
 }
 
-export function normalizeGoogleJobsResult(
-  job: GoogleJobsApiResult
-): NormalizedSerpJob | null {
-  const title = job.title?.trim()
-  const applyUrl = pickApplyUrl(job)
-  const url = applyUrl || job.share_link?.trim() || ""
-
-  if (!title || !url || isBlockedDomain(url)) {
-    return null
-  }
-
-  const snippet = job.description?.trim() || (job.extensions ?? []).join(" · ")
-  const listing = isListingPage(title, url, snippet)
-  const { platform, source } = resolvePlatform(job.via, applyUrl || url)
-
-  const postedText = job.detected_extensions?.posted_at?.trim() || null
-  const publication = postedText
-    ? parsePublishedDateFromText(postedText)
-    : { publishedAt: null, publishedAtText: null }
-
-  const combined = `${title} ${snippet} ${(job.extensions ?? []).join(" ")}`
-
-  return {
-    jobId: job.job_id?.trim() || null,
-    title,
-    company: job.company_name?.trim() || null,
-    location: job.location?.trim() || null,
-    source,
-    platform,
-    url,
-    applyUrl: url,
-    snippet,
-    description: job.description?.trim() || null,
-    publishedAt: publication.publishedAt,
-    publishedAtText: postedText || publication.publishedAtText,
-    companyLogo: job.thumbnail?.trim() || null,
-    jobType: inferJobType(combined, job.extensions),
-    workMode: inferWorkMode(combined, job.detected_extensions),
-    experienceLevel: null,
-    salary: job.detected_extensions?.salary?.trim() || null,
-    isListingPage: listing,
-    tags: extractTags(job),
-  }
-}
-
+/**
+ * Normalizes a single organic_results entry from Google search.
+ */
 export function normalizeGoogleOrganicResult(
-  result: GoogleOrganicApiResult,
-  expectedPlatform?: JobPlatform
+  result: GoogleOrganicApiResult
 ): NormalizedSerpJob | null {
   const title = result.title?.trim()
   const url = result.link?.trim()
   if (!title || !url || isBlockedDomain(url)) return null
 
   const snippet = result.snippet?.trim() || ""
-  const listing = isListingPage(title, url, snippet)
-  const { platform, source } = resolvePlatform(
-    result.source,
-    url,
-    result.source
-  )
 
-  const resolvedPlatform = expectedPlatform ?? platform
+  // Lightweight validation layer (Requirement 10)
+  if (!isLikelyJobPosting({ title, snippet, url })) {
+    return null
+  }
+
+  const isListing = isPlatformListingPage(url, title, snippet)
+  const { platform, source } = resolvePlatform(url, result.source)
+
+  const combined = `${title} ${snippet}`
+  const publication = parsePublishedDateFromText(snippet)
+  const company = extractCompanyFromTitle(title, source)
 
   return {
     jobId: null,
     title,
-    company: null,
+    company,
     location: null,
-    source:
-      resolvedPlatform !== "unknown"
-        ? getPlatformConfig(resolvedPlatform).name
-        : source,
-    platform: resolvedPlatform,
+    source,
+    platform,
     url,
     applyUrl: url,
     snippet,
     description: snippet || null,
-    publishedAt: null,
-    publishedAtText: listing ? null : "Date unavailable",
+    position: result.position ?? 0,
+    displayedLink: result.displayed_link ?? null,
+    publishedAt: publication.publishedAt,
+    publishedAtText: publication.publishedAtText,
     companyLogo: null,
-    jobType: inferJobType(`${title} ${snippet}`),
-    workMode: inferWorkMode(`${title} ${snippet}`),
+    jobType: inferJobType(combined),
+    workMode: inferWorkMode(combined),
     experienceLevel: null,
     salary: null,
-    isListingPage: listing,
+    isListingPage: isListing,
     tags: [],
   }
 }

@@ -65,8 +65,7 @@ export function extractTags(text: string, knownSkills: string[]): string[] {
 }
 
 export function normalizeSearchResult(
-  result: JobSearchResult,
-  knownSkills: string[]
+  result: JobSearchResult
 ): NormalizedJobInput {
   const combined = `${result.title} ${result.snippet}`
 

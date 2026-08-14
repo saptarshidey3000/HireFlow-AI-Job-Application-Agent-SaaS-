@@ -1,14 +1,16 @@
 export type JobSortMode = "latest" | "best_match" | "latest_best_match"
 
+// Keep in sync with the verified SerpApi search strategy's site: group in
+// lib/jobs/query-builder.ts and the entries in lib/jobs/platforms.ts.
 export type JobPlatform =
-  | "greenhouse"
-  | "lever"
-  | "upwork"
-  | "workable"
   | "wellfound"
   | "internshala"
+  | "upwork"
   | "indeed"
-  | "linkedin"
+  | "naukri"
+  | "greenhouse"
+  | "lever"
+  | "workable"
 
 export type JobType =
   | "full-time"

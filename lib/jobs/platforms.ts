@@ -8,107 +8,77 @@ export interface PlatformConfig {
   description: string
 }
 
+// This platform set MUST match the verified SerpApi search strategy's
+// site: restriction group exactly. Do not add or remove platforms here
+// without updating the query in lib/jobs/query-builder.ts to match.
 export const JOB_PLATFORMS: PlatformConfig[] = [
-  {
-    id: "linkedin",
-    name: "LinkedIn",
-    siteDomain: "linkedin.com",
-    sitePath: "/jobs",
-    description: "Jobs",
-  },
-  {
-    id: "indeed",
-    name: "Indeed",
-    siteDomain: "indeed.com",
-    description: "Jobs",
-  },
   {
     id: "wellfound",
     name: "Wellfound",
     siteDomain: "wellfound.com",
-    description: "Jobs",
-  },
-  {
-    id: "greenhouse",
-    name: "Greenhouse",
-    siteDomain: "greenhouse.io",
-    description: "Jobs",
-  },
-  {
-    id: "lever",
-    name: "Lever",
-    siteDomain: "lever.co",
-    description: "Jobs",
-  },
-  {
-    id: "workable",
-    name: "Workable",
-    siteDomain: "workable.com",
-    description: "Jobs",
+    description: "Startup Jobs",
   },
   {
     id: "internshala",
     name: "Internshala",
     siteDomain: "internshala.com",
-    description: "Jobs",
+    description: "Internships & Jobs",
   },
   {
     id: "upwork",
     name: "Upwork",
     siteDomain: "upwork.com",
-    description: "Jobs",
+    description: "Freelance & Remote",
+  },
+  {
+    id: "indeed",
+    name: "Indeed",
+    siteDomain: "indeed.com",
+    description: "Global Job Board",
+  },
+  {
+    id: "naukri",
+    name: "Naukri",
+    siteDomain: "naukri.com",
+    description: "Top Indian Portal",
+  },
+  {
+    id: "greenhouse",
+    name: "Greenhouse",
+    siteDomain: "greenhouse.io",
+    description: "Direct Company ATS",
+  },
+  {
+    id: "lever",
+    name: "Lever",
+    siteDomain: "lever.co",
+    description: "Direct Company ATS",
+  },
+  {
+    id: "workable",
+    name: "Workable",
+    siteDomain: "workable.com",
+    description: "Direct Company ATS",
   },
 ]
 
-export const DEFAULT_PLATFORMS: JobPlatform[] = [
-  "linkedin",
-  "indeed",
-  "wellfound",
-  "greenhouse",
-  "lever",
-  "workable",
-  "internshala",
-]
+export const DEFAULT_PLATFORMS: JobPlatform[] = JOB_PLATFORMS.map(
+  (platform) => platform.id
+)
 
 export const MULTI_SOURCE_PLATFORMS: JobPlatform[] = DEFAULT_PLATFORMS
 
-const HOSTNAME_TO_PLATFORM: Record<string, JobPlatform> = {
-  "greenhouse.io": "greenhouse",
-  "boards.greenhouse.io": "greenhouse",
-  "job-boards.greenhouse.io": "greenhouse",
-  "lever.co": "lever",
-  "jobs.lever.co": "lever",
-  "upwork.com": "upwork",
-  "workable.com": "workable",
-  "apply.workable.com": "workable",
-  "wellfound.com": "wellfound",
-  "angel.co": "wellfound",
-  "internshala.com": "internshala",
-  "indeed.com": "indeed",
-  "www.indeed.com": "indeed",
-  "in.indeed.com": "indeed",
-  "linkedin.com": "linkedin",
-  "www.linkedin.com": "linkedin",
-}
-
-const HOSTNAME_TO_SOURCE: Record<string, string> = {
-  "greenhouse.io": "Greenhouse",
-  "boards.greenhouse.io": "Greenhouse",
-  "job-boards.greenhouse.io": "Greenhouse",
-  "lever.co": "Lever",
-  "jobs.lever.co": "Lever",
-  "upwork.com": "Upwork",
-  "workable.com": "Workable",
-  "apply.workable.com": "Workable",
-  "wellfound.com": "Wellfound",
-  "angel.co": "Wellfound",
-  "internshala.com": "Internshala",
-  "indeed.com": "Indeed",
-  "www.indeed.com": "Indeed",
-  "in.indeed.com": "Indeed",
-  "linkedin.com": "LinkedIn",
-  "www.linkedin.com": "LinkedIn",
-}
+const DOMAIN_TO_PLATFORM: Array<{ domain: string; platform: JobPlatform; name: string }> = [
+  { domain: "wellfound.com", platform: "wellfound", name: "Wellfound" },
+  { domain: "angel.co", platform: "wellfound", name: "Wellfound" },
+  { domain: "internshala.com", platform: "internshala", name: "Internshala" },
+  { domain: "upwork.com", platform: "upwork", name: "Upwork" },
+  { domain: "indeed.com", platform: "indeed", name: "Indeed" },
+  { domain: "naukri.com", platform: "naukri", name: "Naukri" },
+  { domain: "greenhouse.io", platform: "greenhouse", name: "Greenhouse" },
+  { domain: "lever.co", platform: "lever", name: "Lever" },
+  { domain: "workable.com", platform: "workable", name: "Workable" },
+]
 
 export function getPlatformConfig(id: JobPlatform): PlatformConfig {
   const platform = JOB_PLATFORMS.find((item) => item.id === id)
@@ -116,18 +86,15 @@ export function getPlatformConfig(id: JobPlatform): PlatformConfig {
   return platform
 }
 
-export function buildPlatformSiteRestriction(platform: JobPlatform): string {
-  const config = getPlatformConfig(platform)
-  if (config.sitePath) {
-    return `site:${config.siteDomain}${config.sitePath}`
-  }
-  return `site:${config.siteDomain}`
-}
-
 export function resolvePlatformFromUrl(url: string): JobPlatform | "unknown" {
   try {
-    const hostname = new URL(url).hostname.replace(/^www\./, "")
-    return HOSTNAME_TO_PLATFORM[hostname] ?? HOSTNAME_TO_PLATFORM[`www.${hostname}`] ?? "unknown"
+    const hostname = new URL(url).hostname.toLowerCase().replace(/^www\./, "")
+    for (const item of DOMAIN_TO_PLATFORM) {
+      if (hostname === item.domain || hostname.endsWith(`.${item.domain}`)) {
+        return item.platform
+      }
+    }
+    return "unknown"
   } catch {
     return "unknown"
   }
@@ -135,27 +102,19 @@ export function resolvePlatformFromUrl(url: string): JobPlatform | "unknown" {
 
 export function resolveSourceFromUrl(url: string): string {
   try {
-    const hostname = new URL(url).hostname.replace(/^www\./, "")
-    return (
-      HOSTNAME_TO_SOURCE[hostname] ??
-      HOSTNAME_TO_SOURCE[`www.${hostname}`] ??
-      hostname
-    )
+    const hostname = new URL(url).hostname.toLowerCase().replace(/^www\./, "")
+    for (const item of DOMAIN_TO_PLATFORM) {
+      if (hostname === item.domain || hostname.endsWith(`.${item.domain}`)) {
+        return item.name
+      }
+    }
+    return "Unknown"
   } catch {
     return "Unknown"
   }
 }
 
-/** @deprecated Prefer per-source queries via buildPlatformSiteRestriction */
-export function buildSiteRestriction(platforms: JobPlatform[]): string | null {
-  if (platforms.length === 0) return null
-
-  const domains = platforms.map((platform) => buildPlatformSiteRestriction(platform))
-  const unique = Array.from(new Set(domains))
-
-  if (unique.length === 1) {
-    return unique[0]
-  }
-
-  return `(${unique.join(" OR ")})`
+export function buildPlatformSiteRestriction(platform: JobPlatform): string {
+  const config = getPlatformConfig(platform)
+  return `site:${config.siteDomain}`
 }
