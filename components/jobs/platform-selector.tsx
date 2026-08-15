@@ -3,6 +3,7 @@
 import {
   Briefcase,
   Building2,
+  Check,
   Compass,
   Globe2,
   GraduationCap,
@@ -19,14 +20,26 @@ const PLATFORM_ICONS: Record<
   JobPlatform,
   React.ComponentType<{ className?: string }>
 > = {
+  greenhouse: Building2,
+  upwork: Briefcase,
+  workable: Globe2,
   wellfound: Rocket,
   internshala: GraduationCap,
-  upwork: Briefcase,
+  lever: Layers3,
   indeed: Search,
   naukri: Compass,
-  greenhouse: Building2,
-  lever: Layers3,
-  workable: Globe2,
+}
+
+// Display-friendly descriptions matching reference "Job board"
+const PLATFORM_DESCRIPTIONS: Record<JobPlatform, string> = {
+  greenhouse: "Job board",
+  upwork: "Freelance & Remote",
+  workable: "Job board",
+  wellfound: "Job board",
+  internshala: "Internships",
+  lever: "Job board",
+  indeed: "Job board",
+  naukri: "Job board",
 }
 
 export function PlatformSelector({
@@ -46,14 +59,50 @@ export function PlatformSelector({
     onChange([...selected, platform])
   }
 
+  const selectAll = () => {
+    onChange(JOB_PLATFORMS.map((p) => p.id))
+  }
+
+  const clearAll = () => {
+    onChange([])
+  }
+
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-medium text-white">Job Platforms</h2>
-      <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold tracking-wide text-white">
+          Job Platforms
+        </h2>
+        <div className="flex items-center gap-3">
+          {selected.length < JOB_PLATFORMS.length ? (
+            <button
+              type="button"
+              onClick={selectAll}
+              className="text-xs text-[#3FA98A] hover:underline"
+            >
+              Select all
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="text-xs text-[#A7A7A7] hover:text-white"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {JOB_PLATFORMS.map((platform) => {
           const isSelected = selected.includes(platform.id)
-          const Icon = PLATFORM_ICONS[platform.id]
+          const Icon = PLATFORM_ICONS[platform.id] ?? Building2
           const count = counts?.[platform.id]
+          const description =
+            count !== undefined
+              ? `${count} jobs`
+              : PLATFORM_DESCRIPTIONS[platform.id] ?? "Job board"
 
           return (
             <button
@@ -61,29 +110,49 @@ export function PlatformSelector({
               type="button"
               onClick={() => toggle(platform.id)}
               className={cn(
-                "glass-card min-w-[140px] shrink-0 px-4 py-3 text-left transition-all",
+                "group relative flex min-w-[155px] sm:min-w-[170px] shrink-0 items-center justify-between rounded-xl p-3.5 text-left transition-all duration-200",
+                "backdrop-blur-md cursor-pointer select-none",
                 isSelected
-                  ? "border-[#2B8A70] bg-[rgba(13,59,46,0.55)]"
-                  : "hover:border-[rgba(63,169,138,0.18)]"
+                  ? "bg-[rgba(13,59,46,0.55)] border border-[#2B8A70] text-white shadow-[0_0_15px_rgba(43,138,112,0.18)]"
+                  : "bg-[#242424] border border-[#333333] text-[#A7A7A7] hover:border-[#404040] hover:bg-[#2A2A2A]"
               )}
             >
-              <div className="flex items-center gap-3">
-                <span
+              {/* Top right check indicator */}
+              <div
+                className={cn(
+                  "absolute right-2.5 top-2.5 flex size-4.5 items-center justify-center rounded-full transition-all",
+                  isSelected
+                    ? "bg-[#2B8A70] text-white shadow-sm ring-2 ring-[rgba(13,59,46,0.8)]"
+                    : "border border-[#404040] bg-transparent opacity-0 group-hover:opacity-40"
+                )}
+              >
+                <Check className={cn("size-2.5 stroke-[3]", isSelected ? "block" : "hidden")} />
+              </div>
+
+              <div className="flex items-center gap-3 pr-4">
+                {/* Platform Icon Box */}
+                <div
                   className={cn(
-                    "flex size-9 items-center justify-center rounded-lg",
+                    "flex size-9.5 items-center justify-center rounded-lg transition-colors shrink-0",
                     isSelected
-                      ? "bg-[rgba(63,169,138,0.18)] text-[#3FA98A]"
-                      : "bg-[rgba(255,255,255,0.04)] text-[#707070]"
+                      ? "bg-[rgba(43,138,112,0.25)] text-[#3FA98A] border border-[rgba(63,169,138,0.3)]"
+                      : "bg-[rgba(255,255,255,0.04)] text-[#707070] border border-[#333333]"
                   )}
                 >
-                  <Icon className="size-4" />
-                </span>
-                <div>
-                  <p className="text-sm font-medium text-white">
+                  <Icon className="size-4.5" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={cn(
+                      "truncate text-sm font-semibold leading-tight transition-colors",
+                      isSelected ? "text-white" : "text-[#D4D4D4] group-hover:text-white"
+                    )}
+                  >
                     {platform.name}
                   </p>
-                  <p className="text-xs text-[#707070]">
-                    {count !== undefined ? `${count} jobs` : platform.description}
+                  <p className="mt-0.5 truncate text-xs text-[#707070]">
+                    {description}
                   </p>
                 </div>
               </div>
