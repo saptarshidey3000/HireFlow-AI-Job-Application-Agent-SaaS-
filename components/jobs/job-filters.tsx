@@ -1,10 +1,17 @@
 "use client"
 
-import { ChevronDown, SlidersHorizontal } from "lucide-react"
+import {
+  Briefcase,
+  Calendar,
+  Check,
+  ChevronDown,
+  DollarSign,
+  MapPin,
+  SlidersHorizontal,
+} from "lucide-react"
 import { useState } from "react"
 
 import { FilterChips } from "@/components/jobs/filter-chips"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Sheet,
@@ -28,7 +35,7 @@ const WORK_MODE_OPTIONS: { id: WorkModeFilter; label: string }[] = [
   { id: "on-campus", label: "On Campus" },
 ]
 
-function FilterToggle({
+function FilterPill({
   label,
   active,
   onClick,
@@ -42,14 +49,14 @@ function FilterToggle({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3.5 py-1.5 text-sm transition-all",
+        "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer select-none",
         active
-          ? "border-[#2B8A70] bg-[rgba(13,59,46,0.55)] text-white"
-          : "border-[#404040] bg-[rgba(36,36,36,0.55)] text-[#A7A7A7] hover:border-[#2B8A70]/50 hover:text-white"
+          ? "border border-[#2B8A70] bg-[rgba(13,59,46,0.55)] text-white shadow-[0_0_10px_rgba(43,138,112,0.15)]"
+          : "border border-[#333333] bg-[#242424] text-[#A7A7A7] hover:border-[#404040] hover:bg-[#2A2A2A] hover:text-white"
       )}
     >
-      {active ? "✓ " : ""}
-      {label}
+      {active && <Check className="size-3 text-[#3FA98A] stroke-[3]" />}
+      <span>{label}</span>
     </button>
   )
 }
@@ -80,12 +87,15 @@ function FilterGroups({
   }
 
   return (
-    <div className="glass-card space-y-5 p-5">
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-white">Job Type</p>
-        <div className="flex flex-wrap gap-2">
+    <div className="glass-card space-y-4 p-4 md:p-5 bg-[rgba(36,36,36,0.55)] border border-[rgba(255,255,255,0.06)]">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        {/* Job Type Section */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-xs font-semibold uppercase tracking-wider text-[#707070]">
+            Job Type:
+          </span>
           {JOB_TYPE_OPTIONS.map((option) => (
-            <FilterToggle
+            <FilterPill
               key={option.id}
               label={option.label}
               active={filters.jobTypes.includes(option.id)}
@@ -93,16 +103,16 @@ function FilterGroups({
             />
           ))}
         </div>
-        {filters.jobTypes.length === 0 ? (
-          <p className="text-xs text-[#707070]">All job types</p>
-        ) : null}
-      </div>
 
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-white">Work Mode</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="hidden h-5 w-px bg-[#333333] md:block" />
+
+        {/* Work Mode Section */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-xs font-semibold uppercase tracking-wider text-[#707070]">
+            Work Mode:
+          </span>
           {WORK_MODE_OPTIONS.map((option) => (
-            <FilterToggle
+            <FilterPill
               key={option.id}
               label={option.label}
               active={filters.workModes.includes(option.id)}
@@ -110,68 +120,93 @@ function FilterGroups({
             />
           ))}
         </div>
-        {filters.workModes.length === 0 ? (
-          <p className="text-xs text-[#707070]">All work modes</p>
-        ) : null}
+
+        {/* More Filters toggle button */}
+        <button
+          type="button"
+          onClick={onToggleMore}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-all cursor-pointer self-start md:self-auto",
+            showMore
+              ? "border-[#2B8A70] bg-[rgba(13,59,46,0.35)] text-white"
+              : "border-[#333333] bg-[#242424] text-[#A7A7A7] hover:border-[#404040] hover:text-white"
+          )}
+        >
+          <SlidersHorizontal className="size-3.5" />
+          <span>More Filters</span>
+          <ChevronDown
+            className={cn(
+              "size-3.5 transition-transform duration-200",
+              showMore && "rotate-180"
+            )}
+          />
+        </button>
       </div>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="text-[#A7A7A7] hover:text-white"
-        onClick={onToggleMore}
-      >
-        More Filters
-        <ChevronDown
-          className={cn("size-4 transition-transform", showMore && "rotate-180")}
-        />
-      </Button>
-
-      {showMore ? (
-        <div className="grid gap-4 border-t border-[#333333] pt-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-xs text-[#A7A7A7]">Location</label>
+      {/* Expanded More Filters Panel */}
+      {showMore && (
+        <div className="grid gap-3.5 border-t border-[#333333] pt-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-[#A7A7A7]">
+              <MapPin className="size-3 text-[#3FA98A]" />
+              <span>Location</span>
+            </label>
             <Input
               value={filters.location ?? ""}
               onChange={(e) =>
                 onChange({ ...filters, location: e.target.value })
               }
-              placeholder="City or region"
+              placeholder="e.g. Remote, India, US"
+              className="h-9 border-[#333333] bg-[#1E1E1E] text-xs text-white placeholder:text-[#606060] focus:border-[#2B8A70]"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-xs text-[#A7A7A7]">Experience Level</label>
+
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-[#A7A7A7]">
+              <Briefcase className="size-3 text-[#3FA98A]" />
+              <span>Experience Level</span>
+            </label>
             <Input
               value={filters.experienceLevel ?? ""}
               onChange={(e) =>
                 onChange({ ...filters, experienceLevel: e.target.value })
               }
-              placeholder="Entry, Mid, Senior"
+              placeholder="e.g. Entry, Mid, Senior"
+              className="h-9 border-[#333333] bg-[#1E1E1E] text-xs text-white placeholder:text-[#606060] focus:border-[#2B8A70]"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-xs text-[#A7A7A7]">Salary Range</label>
+
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-[#A7A7A7]">
+              <DollarSign className="size-3 text-[#3FA98A]" />
+              <span>Salary Minimum</span>
+            </label>
             <Input
               value={filters.salaryMin ?? ""}
               onChange={(e) =>
                 onChange({ ...filters, salaryMin: e.target.value })
               }
-              placeholder="e.g. 80k+"
+              placeholder="e.g. 100k, $80,000"
+              className="h-9 border-[#333333] bg-[#1E1E1E] text-xs text-white placeholder:text-[#606060] focus:border-[#2B8A70]"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-xs text-[#A7A7A7]">Posted Date</label>
+
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-medium text-[#A7A7A7]">
+              <Calendar className="size-3 text-[#3FA98A]" />
+              <span>Posted Date</span>
+            </label>
             <Input
               value={filters.postedWithin ?? ""}
               onChange={(e) =>
                 onChange({ ...filters, postedWithin: e.target.value })
               }
-              placeholder="Past week, month"
+              placeholder="e.g. Past 24h, 7 days"
+              className="h-9 border-[#333333] bg-[#1E1E1E] text-xs text-white placeholder:text-[#606060] focus:border-[#2B8A70]"
             />
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }
@@ -192,11 +227,13 @@ export function JobFiltersPanel({
     (filters.location ? 1 : 0) +
     (filters.experienceLevel ? 1 : 0) +
     (filters.salaryMin ? 1 : 0) +
-    (filters.postedWithin ? 1 : 0)
+    (filters.postedWithin ? 1 : 0) +
+    (filters.skills?.length ?? 0)
 
   return (
-    <div className="space-y-4">
-      <div className="hidden lg:block">
+    <div className="space-y-3">
+      {/* Desktop / Tablet Filters */}
+      <div className="hidden sm:block">
         <FilterGroups
           filters={filters}
           onChange={onChange}
@@ -205,26 +242,35 @@ export function JobFiltersPanel({
         />
       </div>
 
-      <div className="lg:hidden">
+      {/* Mobile Drawer */}
+      <div className="sm:hidden">
         <Sheet>
-          <SheetTrigger>
-            <Button variant="outline" className="w-full justify-between">
-              <span className="inline-flex items-center gap-2">
-                <SlidersHorizontal className="size-4" />
-                Filters{activeCount > 0 ? ` (${activeCount})` : ""}
+          <SheetTrigger
+            className="flex w-full items-center justify-between rounded-xl border border-[#333333] bg-[#242424] px-4 py-2.5 text-sm font-medium text-white transition-all hover:border-[#2B8A70]"
+          >
+            <span className="inline-flex items-center gap-2">
+              <SlidersHorizontal className="size-4 text-[#3FA98A]" />
+              <span>Filters</span>
+            </span>
+            {activeCount > 0 && (
+              <span className="rounded-full bg-[#2B8A70] px-2 py-0.5 text-xs font-semibold text-white">
+                {activeCount}
               </span>
-            </Button>
+            )}
           </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
+          <SheetContent
+            side="bottom"
+            className="max-h-[85vh] overflow-y-auto border-t border-[#333333] bg-[#1C1C1C] text-white"
+          >
             <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
+              <SheetTitle className="text-white">Filter Opportunities</SheetTitle>
             </SheetHeader>
-            <div className="px-6 pb-6">
+            <div className="px-4 pb-6 pt-2">
               <FilterGroups
                 filters={filters}
                 onChange={onChange}
-                showMore={showMore}
-                onToggleMore={() => setShowMore((prev) => !prev)}
+                showMore={true}
+                onToggleMore={() => {}}
               />
             </div>
           </SheetContent>

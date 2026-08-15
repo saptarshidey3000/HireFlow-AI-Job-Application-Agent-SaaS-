@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { RefreshCw } from "lucide-react"
 
 import { JobFiltersPanel } from "@/components/jobs/job-filters"
 import { JobList } from "@/components/jobs/job-list"
@@ -9,6 +10,7 @@ import { PlatformSelector } from "@/components/jobs/platform-selector"
 import { RecentActivity } from "@/components/jobs/recent-activity"
 import { TargetRoleSearch } from "@/components/jobs/target-role-search"
 import { WelcomeBanner } from "@/components/jobs/welcome-banner"
+import { Button } from "@/components/ui/button"
 import { DEFAULT_PLATFORMS } from "@/lib/jobs/platforms"
 import { sortJobs } from "@/lib/jobs/sorting"
 import type {
@@ -51,13 +53,12 @@ export function JobsPageClient({
   activity: JobActivityItem[]
   userName: string
 }) {
-  // Target role starts COMPLETELY EMPTY per requirement 6
   const [targetRoleDraft, setTargetRoleDraft] = useState("")
   const [activeTargetRole, setActiveTargetRole] = useState("")
   const [platforms, setPlatforms] = useState<JobPlatform[]>(DEFAULT_PLATFORMS)
   const [filters, setFilters] = useState<JobFilters>({
     ...EMPTY_FILTERS,
-    location: "India",
+    location: profile.profile.location || "India",
   })
   const [sortMode, setSortMode] = useState<JobSortMode>("latest")
   const [jobs, setJobs] = useState<JobRecord[]>([])
@@ -238,7 +239,7 @@ export function JobsPageClient({
     [targetRoleDraft, activeTargetRole, filters, executeSearch]
   )
 
-  // Handle filter changes (immediate update, including remote)
+  // Handle filter changes (immediate update)
   const handleFiltersChange = useCallback(
     (nextFilters: JobFilters) => {
       setFilters(nextFilters)
@@ -258,9 +259,12 @@ export function JobsPageClient({
   )
 
   const handleClearFilters = useCallback(() => {
-    const cleared: JobFilters = { ...EMPTY_FILTERS, location: "India" }
+    const cleared: JobFilters = {
+      ...EMPTY_FILTERS,
+      location: profile.profile.location || "India",
+    }
     handleFiltersChange(cleared)
-  }, [handleFiltersChange])
+  }, [handleFiltersChange, profile.profile.location])
 
   const handleRefresh = useCallback(() => {
     const role = activeTargetRole.trim() || targetRoleDraft.trim()
@@ -292,8 +296,36 @@ export function JobsPageClient({
 
   return (
     <div className="space-y-6">
-      <WelcomeBanner userName={userName} />
+      {/* 1. Welcome Banner */}
+      <WelcomeBanner userName={userName} jobsCount={jobs.length} />
 
+      {/* 2. Jobs Page Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
+            Jobs
+          </h2>
+          <p className="mt-1 text-sm text-[#A7A7A7]">
+            Find your next opportunity with AI-powered job matching.
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={searching}
+          onClick={handleRefresh}
+          className="self-start sm:self-auto h-9 rounded-xl border-[#333333] bg-[#242424] px-4 text-xs font-semibold text-white hover:border-[#2B8A70] hover:bg-[rgba(13,59,46,0.3)] transition-all"
+        >
+          <RefreshCw
+            className={cn("size-3.5", searching && "animate-spin text-[#3FA98A]")}
+          />
+          <span>Refresh Jobs</span>
+        </Button>
+      </div>
+
+      {/* 3. Target Role Search Input */}
       <TargetRoleSearch
         value={targetRoleDraft}
         onChange={handleRoleInputChange}
@@ -301,6 +333,7 @@ export function JobsPageClient({
         loading={searching}
       />
 
+      {/* 4. Horizontal Platform Selector */}
       <div ref={platformRef}>
         <PlatformSelector
           selected={platforms}
@@ -309,13 +342,16 @@ export function JobsPageClient({
         />
       </div>
 
+      {/* 5. Job Filters (Pills + More Filters) */}
       <JobFiltersPanel
         filters={filters}
         onChange={handleFiltersChange}
         onClear={handleClearFilters}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      {/* 6. Main 2-Column Grid: Top Job Matches + Right Sidebar */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Left Column: Job Matches List */}
         <div className="order-2 space-y-6 xl:order-1">
           <JobList
             jobs={sortedJobs}
@@ -340,22 +376,24 @@ export function JobsPageClient({
           />
         </div>
 
-        <aside className="order-1 space-y-4 xl:order-2 xl:sticky xl:top-24 xl:self-start">
+        {/* Right Sidebar: Profile Completeness & Recent Activity */}
+        <aside className="order-1 space-y-5 xl:order-2 xl:sticky xl:top-20 xl:self-start">
           <JobsProfileCompleteness profile={profile} />
           <RecentActivity items={activity} />
         </aside>
       </div>
 
-      {toast ? (
+      {/* Glassmorphic Toast Notification */}
+      {toast && (
         <div
           className={cn(
-            "fixed bottom-6 right-6 z-50 rounded-lg border border-[#2B8A70]/30",
-            "bg-[rgba(13,59,46,0.92)] px-4 py-3 text-sm text-white shadow-lg backdrop-blur-md"
+            "fixed bottom-6 right-6 z-50 rounded-xl border border-[#2B8A70]/40",
+            "bg-[rgba(13,59,46,0.95)] px-4.5 py-3 text-xs font-medium text-white shadow-xl backdrop-blur-lg animate-in fade-in slide-in-from-bottom-2"
           )}
         >
           {toast}
         </div>
-      ) : null}
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { Search } from "lucide-react"
+import { Loader2, Search, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,34 +26,51 @@ export function TargetRoleSearch({
     }
   }
 
+  const handleClear = () => {
+    onChange("")
+  }
+
   return (
     <form
       onSubmit={handleSubmit}
-      className={cn("glass-card p-5 md:p-6", className)}
+      className={cn(
+        "glass-card p-4 md:p-5",
+        "bg-[rgba(36,36,36,0.55)] border border-[rgba(255,255,255,0.06)]",
+        className
+      )}
     >
-      <label htmlFor="target-role" className="text-sm font-medium text-white">
-        Target Role
-      </label>
-      <p className="mt-1 text-sm text-[#707070]">
-        Search jobs matched to your resume for a specific role.
-      </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-[#707070]" />
+          <Input
+            id="target-role"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="Search jobs by title or role (e.g. Frontend Developer, Software Engineer)..."
+            className="h-11 border-[#333333] bg-[rgba(13,59,46,0.18)] pl-10 pr-9 text-sm text-white placeholder:text-[#707070] focus:border-[#2B8A70] focus:ring-1 focus:ring-[#2B8A70]"
+          />
+          {value && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#707070] hover:text-white"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <Input
-          id="target-role"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder="e.g. Software Engineer"
-          className="h-11 flex-1 border-[#333333] bg-[rgba(13,59,46,0.25)] text-white placeholder:text-[#707070]"
-        />
         <Button
           type="submit"
-          size="lg"
           disabled={loading || !value.trim()}
-          className="h-11 shrink-0 px-6"
+          className="h-11 shrink-0 rounded-xl bg-[#2B8A70] px-6 font-medium text-white hover:bg-[#3FA98A] disabled:opacity-50"
         >
-          <Search className="size-4" />
-          Search Jobs
+          {loading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Search className="size-4" />
+          )}
+          <span>Search Jobs</span>
         </Button>
       </div>
     </form>
