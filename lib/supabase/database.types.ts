@@ -396,12 +396,105 @@ export interface Database {
         }
         Relationships: []
       }
+      job_applications: {
+        Row: {
+          id: string
+          user_id: string
+          job_id: string | null
+          job_url: string
+          job_title: string
+          company: string | null
+          platform: string
+          apply_mode: "manual" | "auto"
+          status: ApplicationStatus
+          detected_fields: DetectedFormField[]
+          missing_fields: MissingFieldInfo[]
+          form_data: Record<string, unknown>
+          browserbase_session_id: string | null
+          browserbase_session_url: string | null
+          error_message: string | null
+          applied_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          job_id?: string | null
+          job_url: string
+          job_title: string
+          company?: string | null
+          platform: string
+          apply_mode?: "manual" | "auto"
+          status?: ApplicationStatus
+          detected_fields?: DetectedFormField[]
+          missing_fields?: MissingFieldInfo[]
+          form_data?: Record<string, unknown>
+          browserbase_session_id?: string | null
+          browserbase_session_url?: string | null
+          error_message?: string | null
+          applied_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          job_id?: string | null
+          job_url?: string
+          job_title?: string
+          company?: string | null
+          platform?: string
+          apply_mode?: "manual" | "auto"
+          status?: ApplicationStatus
+          detected_fields?: DetectedFormField[]
+          missing_fields?: MissingFieldInfo[]
+          form_data?: Record<string, unknown>
+          browserbase_session_id?: string | null
+          browserbase_session_url?: string | null
+          error_message?: string | null
+          applied_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }
+}
+
+export type ApplicationStatus =
+  | "PENDING"
+  | "DETECTING_FIELDS"
+  | "MISSING_INFO"
+  | "READY_TO_SUBMIT"
+  | "SUBMITTING"
+  | "APPLIED"
+  | "FAILED"
+
+export type ApplyMode = "manual" | "auto"
+
+export interface DetectedFormField {
+  id: string
+  name: string
+  label: string
+  type: "text" | "email" | "phone" | "file" | "select" | "textarea" | "checkbox" | "radio" | "url"
+  required: boolean
+  options?: string[]
+  placeholder?: string
+  selector?: string
+  value?: string
+}
+
+export interface MissingFieldInfo {
+  fieldKey: string
+  label: string
+  section: "personal" | "summary" | "skills" | "work" | "education" | "links" | "resume"
+  description: string
 }
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
@@ -415,6 +508,8 @@ export type ProfileProject = Database["public"]["Tables"]["profile_projects"]["R
 export type ProfileCertification =
   Database["public"]["Tables"]["profile_certifications"]["Row"]
 export type ProfileLink = Database["public"]["Tables"]["profile_links"]["Row"]
+export type JobApplication =
+  Database["public"]["Tables"]["job_applications"]["Row"]
 
 export interface FullProfile {
   profile: Profile
@@ -431,3 +526,4 @@ export interface OnboardingStatus {
   hasResume: boolean
   onboardingCompleted: boolean
 }
+

@@ -10,11 +10,12 @@ import {
   UserRound,
   FileText,
 } from "lucide-react"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 
 import { CertificationsSection } from "@/components/profile/certifications-section"
 import { EducationSection } from "@/components/profile/education-section"
 import { LinksSection } from "@/components/profile/links-section"
+import { MissingFieldsBanner } from "@/components/profile/missing-fields-banner"
 import { PersonalInfoSection } from "@/components/profile/personal-info-section"
 import {
   ProfileCompletenessCard,
@@ -76,6 +77,8 @@ const TAB_ITEMS: Array<{
 ]
 
 export function ProfilePageClient({ profile }: { profile: FullProfile }) {
+  const [activeTab, setActiveTab] = useState<ProfileSectionId>("personal")
+
   const completeness = useMemo(
     () => calculateProfileCompleteness(profile),
     [profile]
@@ -95,9 +98,16 @@ export function ProfilePageClient({ profile }: { profile: FullProfile }) {
         </p>
       </div>
 
+      {/* Missing Fields for Pending Auto-Apply Banner */}
+      <MissingFieldsBanner onSelectTab={(tab) => setActiveTab(tab)} />
+
       <ProfileCompletenessCard completeness={completeness} />
 
-      <Tabs defaultValue="personal">
+      <Tabs
+        defaultValue="personal"
+        value={activeTab}
+        onValueChange={(val) => setActiveTab(val as ProfileSectionId)}
+      >
         <TabsList>
           {TAB_ITEMS.map((tab) => {
             const section = sectionMap.get(tab.id)
