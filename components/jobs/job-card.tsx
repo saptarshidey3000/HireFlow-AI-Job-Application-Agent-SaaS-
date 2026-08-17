@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 
+import { ApplyJobDialog } from "@/components/jobs/apply-job-dialog"
 import { Button } from "@/components/ui/button"
 import { toggleJobSaved } from "@/lib/actions/jobs"
 import { getPlatformConfig, JOB_PLATFORMS } from "@/lib/jobs/platforms"
@@ -83,7 +84,9 @@ export function JobCard({
 }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(job.saved_status)
+  const [applied, setApplied] = useState(job.applied_status)
   const [showDetails, setShowDetails] = useState(false)
+  const [isApplyOpen, setIsApplyOpen] = useState(false)
 
   const platformName = getPlatformLabel(job.platform)
   const tier = getMatchTier(job.match_score)
@@ -111,7 +114,7 @@ export function JobCard({
 
   const handleApply = (e: React.MouseEvent) => {
     e.stopPropagation()
-    window.open(job.job_url, "_blank", "noopener,noreferrer")
+    setIsApplyOpen(true)
   }
 
   const workModeText = formatWorkMode(job.work_mode)
@@ -309,10 +312,15 @@ export function JobCard({
               type="button"
               size="sm"
               onClick={handleApply}
-              className="h-8.5 rounded-xl bg-[#2B8A70] px-3.5 text-xs font-medium text-white shadow-sm transition-all hover:bg-[#3FA98A] hover:shadow-[0_0_12px_rgba(43,138,112,0.3)]"
+              className={cn(
+                "h-8.5 rounded-xl px-3.5 text-xs font-medium shadow-sm transition-all",
+                applied
+                  ? "border border-[#3FA98A]/40 bg-[rgba(13,59,46,0.5)] text-[#3FA98A] hover:bg-[rgba(13,59,46,0.7)]"
+                  : "bg-[#2B8A70] text-white hover:bg-[#3FA98A] hover:shadow-[0_0_12px_rgba(43,138,112,0.3)]"
+              )}
             >
-              <span>Apply Now</span>
-              <ExternalLink className="size-3.5" />
+              <span>{applied ? "Applied" : "Apply Now"}</span>
+              {applied ? <Check className="size-3.5" /> : <ExternalLink className="size-3.5" />}
             </Button>
           </div>
         </div>
@@ -359,6 +367,17 @@ export function JobCard({
           )}
         </div>
       )}
+
+      {/* Apply Options Dialog Modal */}
+      <ApplyJobDialog
+        job={job}
+        open={isApplyOpen}
+        onOpenChange={setIsApplyOpen}
+        onToast={onToast}
+        onAppliedSuccess={() => {
+          setApplied(true)
+        }}
+      />
     </article>
   )
 }
