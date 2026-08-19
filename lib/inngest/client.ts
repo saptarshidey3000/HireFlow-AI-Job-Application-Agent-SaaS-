@@ -19,5 +19,8 @@ export type InngestEvents = {
 
 export const inngest = new Inngest({
   id: "hireflow",
-  eventKey: process.env.INNGEST_EVENT_KEY,
+  isDev:
+    process.env.NODE_ENV === "development" ||
+    process.env.INNGEST_DEV === "1" ||
+    process.env.INNGEST_DEV === "true",
 })
