@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import {
   AlertCircle,
   ArrowRight,
+  Bookmark,
+  BookmarkCheck,
   CheckCircle2,
   ExternalLink,
   Globe,
@@ -28,6 +30,7 @@ import {
   getApplicationStatus,
   startJobApplication,
 } from "@/lib/actions/applications"
+import { toggleJobSaved } from "@/lib/actions/jobs"
 import { getPlatformDisplayInfo, detectPlatformFromUrl } from "@/lib/browserbase/detector"
 import type { JobRecord } from "@/lib/jobs/types"
 import type { JobApplication } from "@/lib/supabase/database.types"
@@ -39,6 +42,7 @@ interface ApplyJobDialogProps {
   onOpenChange: (open: boolean) => void
   onToast: (message: string) => void
   onAppliedSuccess?: (jobId: string) => void
+  onSavedChange?: (job: JobRecord) => void
 }
 
 export function ApplyJobDialog({
@@ -47,11 +51,36 @@ export function ApplyJobDialog({
   onOpenChange,
   onToast,
   onAppliedSuccess,
+  onSavedChange,
 }: ApplyJobDialogProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(job?.saved_status ?? false)
   const [currentApp, setCurrentApp] = useState<JobApplication | null>(null)
   const [polling, setPolling] = useState(false)
+
+  useEffect(() => {
+    if (job) setSaved(job.saved_status)
+  }, [job?.saved_status, job])
+
+  const handleToggleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!job) return
+    setSaving(true)
+    const next = !saved
+    const result = await toggleJobSaved(job.id, next)
+    setSaving(false)
+
+    if (!result.success) {
+      onToast("Could not update saved status.")
+      return
+    }
+
+    setSaved(next)
+    onSavedChange?.(result.job)
+    onToast(next ? "Job saved to your bookmarks." : "Job removed from saved.")
+  }
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -264,17 +293,39 @@ export function ApplyJobDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg border-[rgba(255,255,255,0.08)] bg-[#1e1e1e] p-6 text-white sm:rounded-2xl">
         <DialogHeader className="text-left">
-          <div className="flex items-center gap-2">
-            <span
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                  platformBadge.badgeColor
+                )}
+              >
+                {platformBadge.name}
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={handleToggleSave}
               className={cn(
-                "rounded-md border px-2 py-0.5 text-[11px] font-medium",
-                platformBadge.badgeColor
+                "h-7.5 rounded-lg border px-2.5 text-xs font-medium transition-all",
+                saved
+                  ? "border-[#2B8A70]/50 bg-[rgba(13,59,46,0.4)] text-[#3FA98A] hover:bg-[rgba(13,59,46,0.6)]"
+                  : "border-[#333333] bg-[#242424] text-[#A7A7A7] hover:border-[#404040] hover:text-white"
               )}
             >
-              {platformBadge.name}
-            </span>
+              {saved ? (
+                <BookmarkCheck className="size-3.5 text-[#3FA98A]" />
+              ) : (
+                <Bookmark className="size-3.5 text-[#707070]" />
+              )}
+              <span>{saved ? "Saved" : "Save"}</span>
+            </Button>
           </div>
-          <DialogTitle className="text-xl font-bold tracking-tight text-white line-clamp-1">
+          <DialogTitle className="text-xl font-bold tracking-tight text-white line-clamp-1 pt-1">
             {job.title}
           </DialogTitle>
           <DialogDescription className="text-xs text-[#A7A7A7]">

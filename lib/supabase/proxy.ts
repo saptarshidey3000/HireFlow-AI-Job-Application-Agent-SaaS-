@@ -2,9 +2,16 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 const AUTH_ROUTES = ["/login", "/signup"]
-const PUBLIC_ROUTES = ["/auth/callback", "/auth/confirm"]
+const PUBLIC_ROUTES = ["/auth/callback", "/auth/confirm", "/api/inngest"]
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  // Inngest background functions and webhook sync endpoint should bypass Supabase SSR session handling
+  if (pathname.startsWith("/api/inngest")) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -33,7 +40,6 @@ export async function updateSession(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims()
   const user = data?.claims
-  const pathname = request.nextUrl.pathname
 
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route))
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
