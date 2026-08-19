@@ -5,6 +5,7 @@ import type Stripe from "stripe"
 
 import { actionError, actionSuccess, type ActionResult } from "@/lib/actions/helpers"
 import { getAuthenticatedSupabase } from "@/lib/auth/session"
+import { getSiteUrl } from "@/lib/auth/url"
 import { getStripe } from "@/lib/stripe/client"
 import { getPlanConfig, isUnlimited, PLANS, type PlanConfig, type PlanId } from "@/lib/stripe/config"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -180,9 +181,7 @@ export async function createCheckoutSession(
       revalidatePath("/dashboard/jobs")
       revalidatePath("/dashboard/application-status")
 
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "")
+      const appUrl = getSiteUrl()
 
       return actionSuccess({
         url: `${appUrl}/dashboard/billing?success=true&dev_sandbox=true`,
@@ -216,9 +215,7 @@ export async function createCheckoutSession(
         .eq("user_id", userId)
     }
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "")
+    const appUrl = getSiteUrl()
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -292,9 +289,7 @@ export async function createCustomerPortalSession(): Promise<ActionResult<{ url:
         { onConflict: "user_id" }
       )
       revalidatePath("/dashboard/billing")
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "")
+      const appUrl = getSiteUrl()
       return actionSuccess({ url: `${appUrl}/dashboard/billing?portal_reset=true` })
     }
 
@@ -310,9 +305,7 @@ export async function createCustomerPortalSession(): Promise<ActionResult<{ url:
       return actionError("No active Stripe customer found for this account.")
     }
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "")
+    const appUrl = getSiteUrl()
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: sub.stripe_customer_id,
