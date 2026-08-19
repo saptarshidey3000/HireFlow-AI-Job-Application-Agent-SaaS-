@@ -14,7 +14,7 @@ import {
   Minus,
   Wifi,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { ApplyJobDialog } from "@/components/jobs/apply-job-dialog"
 import { Button } from "@/components/ui/button"
@@ -87,6 +87,14 @@ export function JobCard({
   const [applied, setApplied] = useState(job.applied_status)
   const [showDetails, setShowDetails] = useState(false)
   const [isApplyOpen, setIsApplyOpen] = useState(false)
+
+  useEffect(() => {
+    setSaved(job.saved_status)
+  }, [job.saved_status])
+
+  useEffect(() => {
+    setApplied(job.applied_status)
+  }, [job.applied_status])
 
   const platformName = getPlatformLabel(job.platform)
   const tier = getMatchTier(job.match_score)
@@ -376,6 +384,10 @@ export function JobCard({
         onToast={onToast}
         onAppliedSuccess={() => {
           setApplied(true)
+        }}
+        onSavedChange={(updatedJob) => {
+          setSaved(updatedJob.saved_status)
+          onSavedChange(updatedJob)
         }}
       />
     </article>

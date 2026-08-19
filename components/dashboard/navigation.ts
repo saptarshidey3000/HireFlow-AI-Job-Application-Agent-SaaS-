@@ -1,4 +1,5 @@
 import {
+  Bookmark,
   BriefcaseBusiness,
   ClipboardCheck,
   CreditCard,
@@ -16,6 +17,7 @@ export type NavItem = {
 
 export const mainNavigation: NavItem[] = [
   { label: "Jobs", href: "/dashboard/jobs", icon: BriefcaseBusiness },
+  { label: "Saved Jobs", href: "/dashboard/saved-jobs", icon: Bookmark },
   { label: "Resume", href: "/dashboard/resume", icon: FileText },
   { label: "Profile", href: "/dashboard/profile", icon: UserRound },
   {
@@ -37,6 +39,7 @@ export const footerNavigation: NavItem[] = [
 export const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/dashboard/jobs": "Jobs",
+  "/dashboard/saved-jobs": "Saved Jobs",
   "/dashboard/resume": "Resume",
   "/dashboard/profile": "Profile",
   "/dashboard/application-status": "Application Status",
