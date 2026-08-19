@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { actionError, actionSuccess, type ActionResult } from "@/lib/actions/helpers"
+import { validateAndIncrementDailyUsage } from "@/lib/actions/billing"
 import { getAuthenticatedSupabase } from "@/lib/auth/session"
 import { detectPlatformFromUrl } from "@/lib/browserbase/detector"
 import { inngest } from "@/lib/inngest/client"
@@ -52,6 +53,15 @@ export async function startJobApplication(input: {
       return actionSuccess(data)
     }
 
+    // Auto apply flow: check subscription & daily usage limits
+    const usageCheck = await validateAndIncrementDailyUsage(userId)
+    if (!usageCheck.allowed) {
+      return actionError(
+        usageCheck.errorMessage ||
+          "Daily AI application limit reached. Upgrade your plan to apply to more jobs today."
+      )
+    }
+
     // Auto apply flow: create record and dispatch Inngest event
     const { data, error } = await supabase
       .from("job_applications")
@@ -83,6 +93,7 @@ export async function startJobApplication(input: {
 
     revalidatePath("/dashboard/jobs")
     revalidatePath("/dashboard/application-status")
+    revalidatePath("/dashboard/billing")
     return actionSuccess(data)
   } catch (error) {
     return actionError(
