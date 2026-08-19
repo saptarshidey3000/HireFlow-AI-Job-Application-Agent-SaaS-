@@ -57,6 +57,7 @@ export function ApplyJobDialog({
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(job?.saved_status ?? false)
+  const [limitError, setLimitError] = useState<string | null>(null)
   const [currentApp, setCurrentApp] = useState<JobApplication | null>(null)
   const [polling, setPolling] = useState(false)
 
@@ -86,6 +87,7 @@ export function ApplyJobDialog({
     if (!nextOpen) {
       setCurrentApp(null)
       setPolling(false)
+      setLimitError(null)
     }
     onOpenChange(nextOpen)
   }
@@ -125,6 +127,7 @@ export function ApplyJobDialog({
 
   const handleManualApply = async () => {
     setLoading(true)
+    setLimitError(null)
     // Open in new tab
     window.open(job.job_url, "_blank", "noopener,noreferrer")
 
@@ -147,6 +150,7 @@ export function ApplyJobDialog({
 
   const handleAutoApply = async () => {
     setLoading(true)
+    setLimitError(null)
     const res = await startJobApplication({
       jobId: job.id,
       jobUrl: job.job_url,
@@ -157,7 +161,11 @@ export function ApplyJobDialog({
 
     setLoading(false)
     if (!res.success) {
-      onToast(res.error || "Failed to start AI application.")
+      if (res.error?.includes("limit reached") || res.error?.includes("Upgrade")) {
+        setLimitError(res.error)
+      } else {
+        onToast(res.error || "Failed to start AI application.")
+      }
       return
     }
 
@@ -332,6 +340,38 @@ export function ApplyJobDialog({
             {job.company ? `${job.company} · ` : ""}{job.location || "Remote"}
           </DialogDescription>
         </DialogHeader>
+
+        {limitError && (
+          <div className="rounded-xl border border-[rgba(214,168,79,0.35)] bg-[rgba(30,22,10,0.65)] p-4 text-xs space-y-2.5">
+            <div className="flex items-center gap-2 text-[#D6A84F]">
+              <Sparkles className="size-4 shrink-0" />
+              <span className="font-semibold text-white">Daily AI Apply Limit Reached</span>
+            </div>
+            <p className="text-[#D1D1D1] leading-relaxed">{limitError}</p>
+            <div className="flex items-center gap-2 pt-1">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false)
+                  router.push("/dashboard/billing")
+                }}
+                className="h-8 rounded-lg bg-[#2B8A70] px-3.5 text-xs font-semibold text-white hover:bg-[#3FA98A] shadow-sm"
+              >
+                View Plans & Upgrade →
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setLimitError(null)}
+                className="h-8 text-xs text-[#707070] hover:text-white"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
 
         {currentApp ? (
           renderStatusSection(currentApp)

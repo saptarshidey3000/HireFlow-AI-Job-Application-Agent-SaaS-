@@ -459,6 +459,147 @@ export interface Database {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          plan_id: "free" | "pro" | "unlimited"
+          plan_name: string
+          plan_limit: number
+          status:
+            | "active"
+            | "trialing"
+            | "past_due"
+            | "canceled"
+            | "unpaid"
+            | "incomplete"
+            | "incomplete_expired"
+            | "paused"
+          current_period_start: string | null
+          current_period_end: string | null
+          cancel_at_period_end: boolean
+          payment_status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          plan_id?: "free" | "pro" | "unlimited"
+          plan_name?: string
+          plan_limit?: number
+          status?:
+            | "active"
+            | "trialing"
+            | "past_due"
+            | "canceled"
+            | "unpaid"
+            | "incomplete"
+            | "incomplete_expired"
+            | "paused"
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          payment_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          plan_id?: "free" | "pro" | "unlimited"
+          plan_name?: string
+          plan_limit?: number
+          status?:
+            | "active"
+            | "trialing"
+            | "past_due"
+            | "canceled"
+            | "unpaid"
+            | "incomplete"
+            | "incomplete_expired"
+            | "paused"
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          payment_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_daily_usage: {
+        Row: {
+          id: string
+          user_id: string
+          usage_date: string
+          ai_apply_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          usage_date?: string
+          ai_apply_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          usage_date?: string
+          ai_apply_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      billing_history: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          amount_paid: number
+          currency: string
+          status: string
+          invoice_pdf: string | null
+          hosted_invoice_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          amount_paid?: number
+          currency?: string
+          status?: string
+          invoice_pdf?: string | null
+          hosted_invoice_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          amount_paid?: number
+          currency?: string
+          status?: string
+          invoice_pdf?: string | null
+          hosted_invoice_url?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -510,6 +651,15 @@ export type ProfileCertification =
 export type ProfileLink = Database["public"]["Tables"]["profile_links"]["Row"]
 export type JobApplication =
   Database["public"]["Tables"]["job_applications"]["Row"]
+export type UserSubscription =
+  Database["public"]["Tables"]["user_subscriptions"]["Row"]
+export type UserDailyUsage =
+  Database["public"]["Tables"]["user_daily_usage"]["Row"]
+export type BillingHistoryItem =
+  Database["public"]["Tables"]["billing_history"]["Row"]
+
+export type SubscriptionPlanId = "free" | "pro" | "unlimited"
+export type SubscriptionStatus = UserSubscription["status"]
 
 export interface FullProfile {
   profile: Profile

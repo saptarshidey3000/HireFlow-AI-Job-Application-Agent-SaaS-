@@ -2,13 +2,21 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 const AUTH_ROUTES = ["/login", "/signup"]
-const PUBLIC_ROUTES = ["/auth/callback", "/auth/confirm", "/api/inngest"]
+const PUBLIC_ROUTES = [
+  "/auth/callback",
+  "/auth/confirm",
+  "/api/inngest",
+  "/api/webhooks/stripe",
+]
 
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Inngest background functions and webhook sync endpoint should bypass Supabase SSR session handling
-  if (pathname.startsWith("/api/inngest")) {
+  // Inngest background functions and Stripe webhooks should bypass Supabase SSR session handling
+  if (
+    pathname.startsWith("/api/inngest") ||
+    pathname.startsWith("/api/webhooks")
+  ) {
     return NextResponse.next({ request })
   }
 
