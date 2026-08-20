@@ -1,24 +1,35 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { usePathname } from "next/navigation"
 
+import { OnboardingDialog } from "@/components/onboarding/onboarding-dialog"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import type { OnboardingStatus } from "@/lib/supabase/database.types"
 
 import { DashboardHeader } from "./dashboard-header"
 import { MobileSidebar } from "./mobile-sidebar"
 import { Sidebar } from "./sidebar"
 import { useSidebarState } from "./use-sidebar-state"
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+export function DashboardLayout({
+  children,
+  onboarding,
+}: {
+  children: React.ReactNode
+  onboarding: OnboardingStatus
+}) {
   const pathname = usePathname()
   const { collapsed, hydrated, toggleCollapsed } = useSidebarState()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [prevPathname, setPrevPathname] = useState(pathname)
+  const showOnboarding = !onboarding.isComplete
 
-  useEffect(() => {
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname)
     setMobileOpen(false)
-  }, [pathname])
+  }
 
   return (
     <TooltipProvider delay={200}>
@@ -50,6 +61,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
+
+      {showOnboarding ? <OnboardingDialog open={showOnboarding} /> : null}
     </TooltipProvider>
   )
 }

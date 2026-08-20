@@ -12,6 +12,7 @@ import {
 } from "@/components/auth/auth-shared"
 import { AuthFooterLink } from "@/components/auth/auth-layout"
 import { Input } from "@/components/ui/input"
+import { getAuthCallbackUrl } from "@/lib/auth/url"
 import { createClient } from "@/lib/supabase/client"
 
 export function SignupForm() {
@@ -39,7 +40,7 @@ export function SignupForm() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: getAuthCallbackUrl(),
       },
     })
 
