@@ -135,10 +135,10 @@ export function ApplicationStatusClient({
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl text-white">
+          <h1 className="text-2xl font-bold uppercase tracking-tight text-white sm:text-3xl">
             Application Status
           </h1>
-          <p className="mt-1 text-sm text-[#A7A7A7]">
+          <p className="mt-1 text-xs font-medium text-[#A7A7A7]">
             Track your job applications, Browserbase AI agent sessions, and pending form requirements.
           </p>
         </div>
@@ -149,7 +149,7 @@ export function ApplicationStatusClient({
           size="sm"
           disabled={refreshing}
           onClick={handleRefresh}
-          className="self-start sm:self-auto h-9 rounded-xl border-[#333333] bg-[#242424] px-4 text-xs font-semibold text-white hover:border-[#2B8A70] hover:bg-[rgba(13,59,46,0.3)] transition-all"
+          className="self-start sm:self-auto h-9 px-4 text-xs font-bold uppercase"
         >
           <RefreshCw
             className={cn("size-3.5", refreshing && "animate-spin text-[#3FA98A]")}
@@ -160,42 +160,42 @@ export function ApplicationStatusClient({
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-        <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[rgba(36,36,36,0.55)] p-4">
-          <span className="text-xs text-[#A7A7A7]">Total Applications</span>
-          <p className="mt-1 text-2xl font-bold text-white">{counts.total}</p>
+        <div className="rounded-lg border-2 border-[#2d3835] bg-[#181818] p-4 shadow-[4px_4px_0px_0px_#0d3b2e]">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#A7A7A7]">Total Applications</span>
+          <p className="mt-1 text-2xl font-extrabold text-white">{counts.total}</p>
         </div>
 
-        <div className="rounded-2xl border border-[#2B8A70]/30 bg-[rgba(13,59,46,0.25)] p-4">
-          <span className="text-xs text-[#3FA98A]">Applied</span>
-          <p className="mt-1 text-2xl font-bold text-[#3FA98A]">{counts.applied}</p>
+        <div className="rounded-lg border-2 border-[#2b8a70] bg-[#0d3b2e] p-4 shadow-[4px_4px_0px_0px_#000000]">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#3FA98A]">Applied</span>
+          <p className="mt-1 text-2xl font-extrabold text-[#3FA98A]">{counts.applied}</p>
         </div>
 
-        <div className="rounded-2xl border border-[#fbbf24]/30 bg-[rgba(251,191,36,0.1)] p-4">
-          <span className="text-xs text-[#fbbf24]">Missing Info</span>
-          <p className="mt-1 text-2xl font-bold text-[#fbbf24]">{counts.missing}</p>
+        <div className="rounded-lg border-2 border-[#fbbf24] bg-[#221c0e] p-4 shadow-[4px_4px_0px_0px_#000000]">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#fbbf24]">Missing Info</span>
+          <p className="mt-1 text-2xl font-extrabold text-[#fbbf24]">{counts.missing}</p>
         </div>
 
-        <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[rgba(36,36,36,0.55)] p-4">
-          <span className="text-xs text-[#A7A7A7]">In Progress</span>
-          <p className="mt-1 text-2xl font-bold text-white">{counts.inProgress}</p>
+        <div className="rounded-lg border-2 border-[#2d3835] bg-[#181818] p-4 shadow-[4px_4px_0px_0px_#0d3b2e]">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#A7A7A7]">In Progress</span>
+          <p className="mt-1 text-2xl font-extrabold text-white">{counts.inProgress}</p>
         </div>
       </div>
 
       {/* Applications List */}
       {applications.length === 0 ? (
-        <div className="rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[rgba(36,36,36,0.55)] p-12 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[rgba(13,59,46,0.4)] text-[#3FA98A]">
+        <div className="rounded-lg border-2 border-[#2d3835] bg-[#181818] p-12 text-center shadow-[4px_4px_0px_0px_#0d3b2e]">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-md border-2 border-[#2b8a70] bg-[#0d3b2e] text-[#3FA98A] shadow-[2px_2px_0px_0px_#000000]">
             <Briefcase className="size-6" />
           </div>
-          <h3 className="mt-4 text-base font-semibold text-white">
+          <h3 className="mt-4 text-base font-bold uppercase text-white">
             No applications yet
           </h3>
-          <p className="mx-auto mt-1 max-w-sm text-xs text-[#A7A7A7]">
+          <p className="mx-auto mt-1 max-w-sm text-xs font-medium text-[#A7A7A7]">
             Discover matching jobs and use our AI Agent to auto-apply in one click.
           </p>
           <div className="mt-5">
             <Link href="/dashboard/jobs">
-              <Button size="sm" className="bg-[#2B8A70] text-xs font-semibold text-white hover:bg-[#3FA98A]">
+              <Button size="sm" className="px-5 text-xs font-bold uppercase tracking-wider">
                 <span>Discover Jobs</span>
                 <ArrowRight className="size-3.5" />
               </Button>
@@ -215,28 +215,28 @@ export function ApplicationStatusClient({
               <div
                 key={app.id}
                 className={cn(
-                  "rounded-2xl border p-4.5 transition-all duration-200 sm:p-5",
+                  "rounded-lg border-2 p-4.5 transition-all duration-120 sm:p-5",
                   isMissing
-                    ? "border-[#fbbf24]/40 bg-[rgba(251,191,36,0.05)]"
-                    : "border-[rgba(255,255,255,0.06)] bg-[rgba(36,36,36,0.55)] hover:border-[#2B8A70]/30"
+                    ? "border-[#fbbf24] bg-[#221c0e] shadow-[4px_4px_0px_0px_#000000]"
+                    : "border-[#2d3835] bg-[#181818] shadow-[4px_4px_0px_0px_#0d3b2e]"
                 )}
               >
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   {/* Left info */}
                   <div className="space-y-2 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold text-[#A7A7A7]">
+                      <span className="text-xs font-bold uppercase text-[#A7A7A7]">
                         {app.company || "Direct Employer"}
                       </span>
                       <span
                         className={cn(
-                          "rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                          "rounded-[4px] border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
                           platformBadge.badgeColor
                         )}
                       >
                         {platformBadge.name}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-md border border-[#333333] bg-[#242424] px-2 py-0.5 text-[11px] font-medium text-[#A7A7A7]">
+                      <span className="inline-flex items-center gap-1 rounded-[4px] border border-[#384843] bg-[#141414] px-2 py-0.5 text-[11px] font-bold uppercase text-[#A7A7A7]">
                         {isAuto ? (
                           <>
                             <Bot className="size-3 text-[#3FA98A]" />
@@ -255,27 +255,27 @@ export function ApplicationStatusClient({
                       {app.job_title}
                     </h3>
 
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#707070]">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-[#707070]">
                       <span>Initiated: {formatAppDate(app.created_at)}</span>
                       {app.applied_at && (
                         <>
                           <span>·</span>
-                          <span className="text-[#3FA98A]">Applied: {formatAppDate(app.applied_at)}</span>
+                          <span className="font-bold text-[#3FA98A]">Applied: {formatAppDate(app.applied_at)}</span>
                         </>
                       )}
                     </div>
 
                     {/* Missing fields alert tags */}
                     {isMissing && app.missing_fields && app.missing_fields.length > 0 && (
-                      <div className="mt-2 rounded-xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 p-3">
-                        <span className="text-xs font-semibold text-[#fbbf24]">
+                      <div className="mt-2 rounded-md border-2 border-[#fbbf24] bg-[#2d220c] p-3 shadow-[2px_2px_0px_0px_#000000]">
+                        <span className="text-xs font-bold uppercase text-[#fbbf24]">
                           Action required: Complete these profile fields to finish application:
                         </span>
                         <div className="mt-1.5 flex flex-wrap gap-1.5">
                           {app.missing_fields.map((field) => (
                             <span
                               key={field.fieldKey}
-                              className="rounded-md border border-[#fbbf24]/40 bg-[#fbbf24]/20 px-2 py-0.5 text-xs text-[#fbbf24]"
+                              className="rounded-[4px] border border-[#fbbf24] bg-[#3a2e12] px-2 py-0.5 text-xs font-bold text-[#fbbf24]"
                             >
                               {field.label}
                             </span>
@@ -286,18 +286,18 @@ export function ApplicationStatusClient({
 
                     {/* Error message */}
                     {isFailed && app.error_message && (
-                      <p className="text-xs text-[#f87171]">
+                      <p className="text-xs font-bold text-[#f87171]">
                         Error: {app.error_message}
                       </p>
                     )}
                   </div>
 
                   {/* Right side actions & status */}
-                  <div className="flex flex-wrap sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-3 shrink-0 pt-3 sm:pt-0 border-t border-[#333333] sm:border-0">
+                  <div className="flex flex-wrap sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-3 shrink-0 pt-3 sm:pt-0 border-t-2 border-[#2d3835] sm:border-0">
                     {/* Status Badge */}
                     <div
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-xs font-semibold",
+                        "inline-flex items-center gap-1.5 rounded-[4px] border-2 px-3 py-1 text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_#000000]",
                         statusBadge.color
                       )}
                     >
@@ -311,7 +311,7 @@ export function ApplicationStatusClient({
                         href={`https://www.browserbase.com/sessions/${app.browserbase_session_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-[#3FA98A] hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#3FA98A] hover:underline"
                       >
                         <Video className="size-3.5" />
                         <span>View Session Replay</span>
@@ -324,7 +324,7 @@ export function ApplicationStatusClient({
                         <Link href={`/dashboard/profile?missing_for=${app.id}`}>
                           <Button
                             size="sm"
-                            className="h-8.5 rounded-xl bg-[#fbbf24] px-3.5 text-xs font-semibold text-black hover:bg-[#f59e0b]"
+                            className="h-8.5 rounded-md border-2 border-[#fbbf24] bg-[#fbbf24] px-3.5 text-xs font-bold uppercase text-black shadow-[2px_2px_0px_0px_#000000] hover:bg-[#f59e0b]"
                           >
                             <span>Fix in Profile</span>
                             <ArrowRight className="size-3" />
@@ -336,7 +336,7 @@ export function ApplicationStatusClient({
                           variant="outline"
                           disabled={retryingId === app.id}
                           onClick={() => handleRetry(app.id)}
-                          className="h-8.5 rounded-xl border-[#333333] text-xs text-white hover:bg-[#2B8A70]/20"
+                          className="h-8.5 text-xs font-bold uppercase"
                         >
                           {retryingId === app.id ? (
                             <Loader2 className="size-3.5 animate-spin" />
@@ -351,7 +351,7 @@ export function ApplicationStatusClient({
                         href={app.job_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex h-8.5 items-center justify-center rounded-xl border border-[#333333] bg-[#242424] px-3 text-xs font-medium text-[#CFCFCF] transition-all hover:border-[#404040] hover:text-white"
+                        className="inline-flex h-8.5 items-center justify-center rounded-md border-2 border-[#384843] bg-[#141414] px-3 text-xs font-bold uppercase tracking-wider text-[#CFCFCF] shadow-[2px_2px_0px_0px_#000000] transition-all hover:border-[#3fa98a] hover:text-white"
                       >
                         <span>Job Link</span>
                         <ExternalLink className="ml-1 size-3" />

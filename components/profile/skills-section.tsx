@@ -64,13 +64,13 @@ export function SkillsSection({
         {items.map((skill, index) => (
           <span
             key={`${skill}-${index}`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#404040] bg-[#2D2D2D] px-3 py-1.5 text-sm text-white"
+            className="inline-flex items-center gap-1.5 rounded-[4px] border-2 border-[#384843] bg-[#141414] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-[2px_2px_0px_0px_#000000]"
           >
             {skill}
             <button
               type="button"
               onClick={() => removeSkill(index)}
-              className="text-[#707070] transition hover:text-white"
+              className="text-[#707070] transition hover:text-[#e05a5a] cursor-pointer"
             >
               <X className="size-3.5" />
             </button>

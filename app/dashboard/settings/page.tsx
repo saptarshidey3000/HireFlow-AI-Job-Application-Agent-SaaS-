@@ -20,7 +20,7 @@ function SignOutButton() {
     <Button
       variant="outline"
       onClick={handleSignOut}
-      className="mt-8 h-9 rounded-md border-[#333333] bg-[#242424] text-[#A7A7A7] hover:border-[#404040] hover:bg-[#2D2D2D] hover:text-white"
+      className="mt-8 h-9 text-xs font-bold uppercase tracking-wider"
     >
       Sign out
     </Button>

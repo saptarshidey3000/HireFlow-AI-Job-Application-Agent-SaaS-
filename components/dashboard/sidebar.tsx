@@ -21,8 +21,8 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex h-full shrink-0 flex-col border-r border-[#333333]",
-        "bg-[rgba(0,0,0,0.78)] backdrop-blur-[12px] [-webkit-backdrop-filter:blur(12px)]",
+        "flex h-full shrink-0 flex-col border-r-2 border-[#2d3835]",
+        "bg-[#111111]",
         "transition-[width] duration-200 ease-in-out motion-reduce:transition-none",
         collapsed ? "w-[76px]" : "w-[260px]",
         !hydrated && "w-[260px]",

@@ -91,13 +91,13 @@ export function ResumeUploadZone({
               handleFile(e.dataTransfer.files[0])
             }}
           >
-            <div className="ai-surface mb-4 flex size-12 items-center justify-center rounded-full">
+            <div className="mb-4 flex size-12 items-center justify-center rounded-md border-2 border-[#2b8a70] bg-[#0d3b2e] shadow-[2px_2px_0px_0px_#000000]">
               <Upload className="size-5 text-[#3FA98A]" />
             </div>
-            <p className="text-sm font-medium text-white">
+            <p className="text-sm font-bold uppercase tracking-wider text-white">
               Upload your resume
             </p>
-            <p className="mt-1 text-xs text-[#707070]">
+            <p className="mt-1 text-xs font-medium text-[#707070]">
               PDF or DOCX supported
             </p>
           </div>
@@ -111,7 +111,7 @@ export function ResumeUploadZone({
           />
 
           <Button
-            className="w-full bg-white text-black hover:bg-white/90"
+            className="w-full font-bold uppercase tracking-wider"
             onClick={() => inputRef.current?.click()}
             disabled={isProcessing}
           >
@@ -120,7 +120,7 @@ export function ResumeUploadZone({
 
           {phase === "error" && (
             <div className="space-y-3 text-center">
-              <p className="text-sm text-[#E05A5A]">{error}</p>
+              <p className="text-sm font-bold text-[#E05A5A]">{error}</p>
               <Button variant="outline" onClick={reset}>
                 Try again
               </Button>
@@ -128,16 +128,16 @@ export function ResumeUploadZone({
           )}
         </>
       ) : (
-        <div className="glass-card px-6 py-8 text-center">
+        <div className="rounded-lg border-2 border-[#2d3835] bg-[#181818] px-6 py-8 text-center shadow-[4px_4px_0px_0px_#0d3b2e]">
           {phase === "complete" ? (
             <CheckCircle2 className="mx-auto mb-4 size-10 text-[#3FA98A]" />
           ) : (
             <Loader2 className="mx-auto mb-4 size-10 animate-spin text-[#3FA98A]" />
           )}
-          <p className="text-base font-medium text-white">{status.title}</p>
-          <p className="mt-2 text-sm text-[#A7A7A7]">{status.description}</p>
+          <p className="text-base font-bold text-white">{status.title}</p>
+          <p className="mt-2 text-xs font-medium text-[#A7A7A7]">{status.description}</p>
           {phase === "complete" && (
-            <p className="mt-3 text-xs text-[#3FA98A]">✓ Resume uploaded</p>
+            <p className="mt-3 text-xs font-bold uppercase text-[#3FA98A]">✓ Resume uploaded</p>
           )}
         </div>
       )}

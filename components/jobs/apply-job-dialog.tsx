@@ -299,13 +299,13 @@ export function ApplyJobDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg border-[rgba(255,255,255,0.08)] bg-[#1e1e1e] p-6 text-white sm:rounded-2xl">
+      <DialogContent className="max-w-lg rounded-lg border-2 border-[#2d3835] bg-[#161616] p-6 text-white shadow-[8px_8px_0px_0px_#0d3b2e]">
         <DialogHeader className="text-left">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span
                 className={cn(
-                  "rounded-md border px-2 py-0.5 text-[11px] font-medium",
+                  "rounded-[4px] border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
                   platformBadge.badgeColor
                 )}
               >
@@ -319,10 +319,10 @@ export function ApplyJobDialog({
               disabled={saving}
               onClick={handleToggleSave}
               className={cn(
-                "h-7.5 rounded-lg border px-2.5 text-xs font-medium transition-all",
+                "h-7.5 rounded-md px-2.5 text-xs font-bold uppercase tracking-wider transition-all",
                 saved
-                  ? "border-[#2B8A70]/50 bg-[rgba(13,59,46,0.4)] text-[#3FA98A] hover:bg-[rgba(13,59,46,0.6)]"
-                  : "border-[#333333] bg-[#242424] text-[#A7A7A7] hover:border-[#404040] hover:text-white"
+                  ? "border-[#2b8a70] bg-[#0d3b2e] text-[#3FA98A]"
+                  : "border-[#384843] bg-[#141414] text-[#A7A7A7]"
               )}
             >
               {saved ? (
@@ -336,16 +336,16 @@ export function ApplyJobDialog({
           <DialogTitle className="text-xl font-bold tracking-tight text-white line-clamp-1 pt-1">
             {job.title}
           </DialogTitle>
-          <DialogDescription className="text-xs text-[#A7A7A7]">
+          <DialogDescription className="text-xs font-medium text-[#A7A7A7]">
             {job.company ? `${job.company} · ` : ""}{job.location || "Remote"}
           </DialogDescription>
         </DialogHeader>
 
         {limitError && (
-          <div className="rounded-xl border border-[rgba(214,168,79,0.35)] bg-[rgba(30,22,10,0.65)] p-4 text-xs space-y-2.5">
+          <div className="rounded-md border-2 border-[#D6A84F] bg-[rgba(30,22,10,0.85)] p-4 text-xs space-y-2.5 shadow-[3px_3px_0px_0px_#000000]">
             <div className="flex items-center gap-2 text-[#D6A84F]">
               <Sparkles className="size-4 shrink-0" />
-              <span className="font-semibold text-white">Daily AI Apply Limit Reached</span>
+              <span className="font-bold uppercase tracking-wide text-white">Daily AI Apply Limit Reached</span>
             </div>
             <p className="text-[#D1D1D1] leading-relaxed">{limitError}</p>
             <div className="flex items-center gap-2 pt-1">
@@ -356,7 +356,7 @@ export function ApplyJobDialog({
                   onOpenChange(false)
                   router.push("/dashboard/billing")
                 }}
-                className="h-8 rounded-lg bg-[#2B8A70] px-3.5 text-xs font-semibold text-white hover:bg-[#3FA98A] shadow-sm"
+                className="h-8 px-3.5 text-xs font-bold uppercase tracking-wider text-white"
               >
                 View Plans & Upgrade →
               </Button>
@@ -365,7 +365,7 @@ export function ApplyJobDialog({
                 variant="ghost"
                 size="sm"
                 onClick={() => setLimitError(null)}
-                className="h-8 text-xs text-[#707070] hover:text-white"
+                className="h-8 text-xs font-bold uppercase text-[#707070] hover:text-white"
               >
                 Dismiss
               </Button>
@@ -380,23 +380,23 @@ export function ApplyJobDialog({
             {/* Option 1: Apply Automatically using AI Agent */}
             <div
               onClick={!loading ? handleAutoApply : undefined}
-              className="group relative flex cursor-pointer flex-col gap-2.5 rounded-xl border border-[#2B8A70]/40 bg-[rgba(13,59,46,0.3)] p-4 transition-all hover:border-[#3FA98A] hover:bg-[rgba(13,59,46,0.5)] hover:shadow-[0_0_20px_rgba(43,138,112,0.2)]"
+              className="group relative flex cursor-pointer flex-col gap-2.5 rounded-md border-2 border-[#2b8a70] bg-[#0d3b2e]/60 p-4 shadow-[4px_4px_0px_0px_#000000] transition-all duration-120 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#0d3b2e] hover:shadow-[5px_5px_0px_0px_#2b8a70]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-[#2B8A70] text-white">
+                  <div className="flex size-8 items-center justify-center rounded-md border border-[#3fa98a] bg-[#2B8A70] text-white">
                     <Sparkles className="size-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">
+                    <h4 className="text-sm font-bold text-white">
                       Apply Automatically using AI Agent
                     </h4>
-                    <span className="text-[11px] font-medium text-[#3FA98A]">
-                      Recommended · Powered by Browserbase & Stagehand
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#3FA98A]">
+                      Recommended · Browser Agent
                     </span>
                   </div>
                 </div>
-                <div className="flex size-7 items-center justify-center rounded-full bg-[#2B8A70]/20 text-[#3FA98A] group-hover:bg-[#2B8A70] group-hover:text-white transition-all">
+                <div className="flex size-7 items-center justify-center rounded-md border border-[#2b8a70] bg-[#2B8A70]/40 text-[#3FA98A] group-hover:bg-[#2B8A70] group-hover:text-white transition-all">
                   <Play className="size-3.5 fill-current" />
                 </div>
               </div>
@@ -409,23 +409,23 @@ export function ApplyJobDialog({
             {/* Option 2: Apply Manually */}
             <div
               onClick={!loading ? handleManualApply : undefined}
-              className="group relative flex cursor-pointer flex-col gap-2.5 rounded-xl border border-[#333333] bg-[#242424] p-4 transition-all hover:border-[#404040] hover:bg-[#282828]"
+              className="group relative flex cursor-pointer flex-col gap-2.5 rounded-md border-2 border-[#384843] bg-[#1a1a1a] p-4 shadow-[4px_4px_0px_0px_#000000] transition-all duration-120 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:border-[#3fa98a] hover:bg-[#242424]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-[#333333] text-[#A7A7A7]">
+                  <div className="flex size-8 items-center justify-center rounded-md border border-[#384843] bg-[#141414] text-[#A7A7A7]">
                     <Globe className="size-4" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">
+                    <h4 className="text-sm font-bold text-white">
                       Apply Manually
                     </h4>
-                    <span className="text-[11px] text-[#707070]">
+                    <span className="text-[11px] font-medium text-[#707070]">
                       Open job page in a new browser tab
                     </span>
                   </div>
                 </div>
-                <div className="flex size-7 items-center justify-center rounded-full bg-[#333333] text-[#A7A7A7] group-hover:bg-[#404040] group-hover:text-white transition-all">
+                <div className="flex size-7 items-center justify-center rounded-md border border-[#384843] bg-[#141414] text-[#A7A7A7] group-hover:border-[#3fa98a] group-hover:text-white transition-all">
                   <ExternalLink className="size-3.5" />
                 </div>
               </div>
@@ -443,13 +443,13 @@ export function ApplyJobDialog({
             variant="ghost"
             size="sm"
             onClick={() => onOpenChange(false)}
-            className="text-xs text-[#707070] hover:text-white"
+            className="text-xs font-bold uppercase text-[#707070] hover:text-white"
           >
             Cancel
           </Button>
 
           {loading && (
-            <div className="flex items-center gap-2 text-xs text-[#3FA98A]">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#3FA98A]">
               <Loader2 className="size-3.5 animate-spin" />
               <span>Launching...</span>
             </div>

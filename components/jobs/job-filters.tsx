@@ -49,10 +49,10 @@ function FilterPill({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer select-none",
+        "inline-flex items-center gap-1.5 rounded-[5px] px-3 py-1.5 text-xs font-bold transition-all duration-120 cursor-pointer select-none",
         active
-          ? "border border-[#2B8A70] bg-[rgba(13,59,46,0.55)] text-white shadow-[0_0_10px_rgba(43,138,112,0.15)]"
-          : "border border-[#333333] bg-[#242424] text-[#A7A7A7] hover:border-[#404040] hover:bg-[#2A2A2A] hover:text-white"
+          ? "border-2 border-[#2b8a70] bg-[#0d3b2e] text-white shadow-[2px_2px_0px_0px_#000000]"
+          : "border-2 border-[#384843] bg-[#141414] text-[#A7A7A7] hover:border-[#3fa98a] hover:bg-[#242424] hover:text-white hover:shadow-[2px_2px_0px_0px_#000000]"
       )}
     >
       {active && <Check className="size-3 text-[#3FA98A] stroke-[3]" />}
@@ -87,7 +87,7 @@ function FilterGroups({
   }
 
   return (
-    <div className="glass-card space-y-4 p-4 md:p-5 bg-[rgba(36,36,36,0.55)] border border-[rgba(255,255,255,0.06)]">
+    <div className="space-y-4 rounded-lg border-2 border-[#2d3835] bg-[#181818] p-4 shadow-[4px_4px_0px_0px_#0d3b2e] md:p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         {/* Job Type Section */}
         <div className="flex flex-wrap items-center gap-2">

@@ -75,7 +75,7 @@ function TabsList({
       role="tablist"
       aria-orientation="horizontal"
       className={cn(
-        "glass-card flex gap-1 overflow-x-auto p-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "flex gap-1.5 overflow-x-auto rounded-lg border-2 border-[#2d3835] bg-[#141414] p-1.5 shadow-[3px_3px_0px_0px_#000000] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className
       )}
     >
@@ -107,21 +107,21 @@ function TabsTrigger({
       id={`tab-${value}`}
       onClick={() => setValue(value)}
       className={cn(
-        "inline-flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all outline-none",
-        "focus-visible:ring-2 focus-visible:ring-[#2B8A70]/30",
+        "inline-flex shrink-0 items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold transition-all duration-120 outline-none cursor-pointer",
+        "focus-visible:ring-2 focus-visible:ring-[#3fa98a]/50",
         selected
-          ? "bg-[rgba(13,59,46,0.55)] text-white shadow-[inset_0_0_0_1px_rgba(63,169,138,0.25)]"
-          : "text-[#A7A7A7] hover:bg-[rgba(255,255,255,0.04)] hover:text-white",
+          ? "border-2 border-[#2b8a70] bg-[#0d3b2e] text-white shadow-[2px_2px_0px_0px_#000000]"
+          : "border-2 border-transparent text-[#A7A7A7] hover:border-[#384843] hover:bg-[#242424] hover:text-white",
         className
       )}
     >
       {icon ? (
         <span
           className={cn(
-            "flex size-7 items-center justify-center rounded-md",
+            "flex size-6 items-center justify-center rounded-[4px]",
             selected
-              ? "bg-[rgba(63,169,138,0.18)] text-[#3FA98A]"
-              : "bg-[rgba(255,255,255,0.04)] text-[#707070]"
+              ? "bg-[#2b8a70]/30 text-[#3FA98A]"
+              : "bg-[#242424] text-[#707070]"
           )}
         >
           {icon}

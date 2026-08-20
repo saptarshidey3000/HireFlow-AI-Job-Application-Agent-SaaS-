@@ -103,21 +103,21 @@ export function JobList({
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold tracking-tight text-white">
+            <h2 className="text-lg font-extrabold uppercase tracking-tight text-white">
               Top Job Matches
             </h2>
             {jobs.length > 0 && (
-              <span className="rounded-full border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.04)] px-2.5 py-0.5 text-xs font-semibold text-[#A7A7A7]">
+              <span className="rounded-[4px] border border-[#384843] bg-[#141414] px-2 py-0.5 text-xs font-bold text-[#A7A7A7]">
                 {jobs.length}
               </span>
             )}
           </div>
           {targetRole ? (
-            <p className="text-xs text-[#707070]">
-              Matching results for <span className="font-medium text-white">&quot;{targetRole}&quot;</span>
+            <p className="text-xs font-medium text-[#707070]">
+              Matching results for <span className="font-bold text-white">&quot;{targetRole}&quot;</span>
             </p>
           ) : (
-            <p className="text-xs text-[#707070]">
+            <p className="text-xs font-medium text-[#707070]">
               AI-ranked by profile compatibility
             </p>
           )}
@@ -126,7 +126,7 @@ export function JobList({
         {/* Header Controls: Sort + Refresh */}
         <div className="flex flex-wrap items-center gap-2">
           {searching && (
-            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-[#3FA98A]">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-[#3FA98A]">
               <Loader2 className="size-3.5 animate-spin" />
               <span>Updating...</span>
             </div>
@@ -140,7 +140,7 @@ export function JobList({
             size="sm"
             disabled={searching}
             onClick={onRefresh}
-            className="h-8.5 rounded-xl border-[#333333] bg-[#242424] px-3 text-xs font-medium text-[#CFCFCF] transition-all hover:border-[#404040] hover:text-white"
+            className="h-8.5 text-xs font-bold uppercase"
           >
             <RefreshCw
               className={cn("size-3.5", searching && "animate-spin text-[#3FA98A]")}
@@ -152,7 +152,7 @@ export function JobList({
 
       {/* Error banner if search had partial failure */}
       {error && (
-        <div className="rounded-xl border border-[rgba(224,90,90,0.3)] bg-[rgba(40,10,10,0.45)] px-4 py-3 text-xs text-[#ffb4b4]">
+        <div className="rounded-md border-2 border-[#e05a5a] bg-[#381414] px-4 py-3 text-xs font-bold text-[#ffb4b4] shadow-[3px_3px_0px_0px_#000000]">
           {error}
         </div>
       )}
@@ -184,7 +184,7 @@ export function JobList({
             variant="outline"
             disabled={searching}
             onClick={onLoadMore}
-            className="h-10 rounded-xl border-[#333333] bg-[#242424] px-6 text-xs font-semibold text-white transition-all hover:border-[#2B8A70] hover:bg-[rgba(13,59,46,0.3)]"
+            className="h-10 px-6 text-xs font-bold uppercase tracking-wider"
           >
             {searching ? (
               <Loader2 className="size-4 animate-spin" />

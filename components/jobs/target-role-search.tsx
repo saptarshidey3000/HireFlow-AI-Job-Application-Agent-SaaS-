@@ -34,8 +34,7 @@ export function TargetRoleSearch({
     <form
       onSubmit={handleSubmit}
       className={cn(
-        "glass-card p-4 md:p-5",
-        "bg-[rgba(36,36,36,0.55)] border border-[rgba(255,255,255,0.06)]",
+        "rounded-lg border-2 border-[#2d3835] bg-[#181818] p-4 shadow-[4px_4px_0px_0px_#0d3b2e] md:p-5",
         className
       )}
     >
@@ -47,7 +46,7 @@ export function TargetRoleSearch({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder="Search jobs by title or role (e.g. Frontend Developer, Software Engineer)..."
-            className="h-11 border-[#333333] bg-[rgba(13,59,46,0.18)] pl-10 pr-9 text-sm text-white placeholder:text-[#707070] focus:border-[#2B8A70] focus:ring-1 focus:ring-[#2B8A70]"
+            className="h-11 border-2 border-[#384843] bg-[#141414] pl-10 pr-9 text-sm font-medium text-white placeholder:text-[#707070] shadow-[2px_2px_0px_0px_#000000] focus:border-[#3fa98a] focus:shadow-[3px_3px_0px_0px_#0d3b2e]"
           />
           {value && (
             <button
@@ -63,7 +62,7 @@ export function TargetRoleSearch({
         <Button
           type="submit"
           disabled={loading || !value.trim()}
-          className="h-11 shrink-0 rounded-xl bg-[#2B8A70] px-6 font-medium text-white hover:bg-[#3FA98A] disabled:opacity-50"
+          className="h-11 shrink-0 px-6 font-bold uppercase tracking-wider disabled:opacity-50"
         >
           {loading ? (
             <Loader2 className="size-4 animate-spin" />

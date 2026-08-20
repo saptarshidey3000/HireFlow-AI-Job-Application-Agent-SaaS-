@@ -30,10 +30,10 @@ export function CreditsCard({ collapsed }: { collapsed: boolean }) {
         href="/dashboard/billing"
         aria-label="AI Credits — Manage credits"
         className={cn(
-          "flex size-10 items-center justify-center rounded-lg border transition-[border-color,background] duration-150 ease-in-out",
-          "border-[rgba(63,169,138,0.18)] bg-[rgba(13,59,46,0.32)]",
-          "text-[#3FA98A] hover:border-[rgba(63,169,138,0.35)] hover:bg-[rgba(13,59,46,0.45)]",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2B8A70]/30"
+          "flex size-10 items-center justify-center rounded-md border-2 transition-all duration-120 ease-in-out",
+          "border-[#2b8a70] bg-[#0d3b2e] shadow-[2px_2px_0px_0px_#000000]",
+          "text-[#3FA98A] hover:bg-[#145a46] hover:text-white",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3fa98a]/50"
         )}
       >
         {isUnlimited ? <Crown className="size-4 text-[#eab308]" /> : <Sparkles className="size-4" />}
@@ -44,27 +44,27 @@ export function CreditsCard({ collapsed }: { collapsed: boolean }) {
   return (
     <div
       className={cn(
-        "rounded-[10px] border p-3 transition-[border-color,background] duration-150 ease-in-out",
-        "border-[rgba(63,169,138,0.18)] bg-[rgba(13,59,46,0.32)]"
+        "rounded-md border-2 p-3 transition-all duration-120 ease-in-out",
+        "border-[#2b8a70] bg-[#0d3b2e]/90 shadow-[3px_3px_0px_0px_#000000]"
       )}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {isUnlimited ? (
             <Crown className="size-3.5 text-[#eab308]" />
           ) : (
             <Sparkles className="size-3.5 text-[#3FA98A]" />
           )}
-          <p className="text-xs font-semibold text-[#F5F5F5]">{planName} Plan</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-[#F5F5F5]">{planName} Plan</p>
         </div>
-        <span className="text-[10px] font-medium text-[#3FA98A]">
+        <span className="text-[10px] font-bold text-[#3FA98A]">
           {isUnlimited ? "Unlimited" : `${used}/${limit} today`}
         </span>
       </div>
 
       <div className="mt-2.5">
         <div
-          className="h-1.5 w-full overflow-hidden rounded-full bg-[#333333]"
+          className="h-2 w-full overflow-hidden rounded-[2px] border border-[#2b8a70]/50 bg-[#111111]"
           role="progressbar"
           aria-valuenow={percent}
           aria-valuemin={0}
@@ -73,11 +73,11 @@ export function CreditsCard({ collapsed }: { collapsed: boolean }) {
         >
           <div
             className={cn(
-              "h-full rounded-full transition-all duration-300 ease-in-out",
+              "h-full transition-all duration-200 ease-in-out",
               percent >= 100 && !isUnlimited
                 ? "bg-[#f87171]"
                 : isUnlimited
-                ? "bg-gradient-to-r from-[#eab308] to-[#3FA98A]"
+                ? "bg-[#eab308]"
                 : "bg-[#3FA98A]"
             )}
             style={{ width: `${percent}%` }}
@@ -87,9 +87,9 @@ export function CreditsCard({ collapsed }: { collapsed: boolean }) {
 
       <Link
         href="/dashboard/billing"
-        className="mt-2.5 inline-flex text-xs font-medium text-[#3FA98A] transition-colors duration-150 ease-in-out hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2B8A70]/30"
+        className="mt-2.5 inline-flex text-xs font-bold text-[#3FA98A] transition-colors duration-120 ease-in-out hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3fa98a]/50"
       >
-        {isUnlimited ? "Manage Subscription →" : "Upgrade Plan →"}
+        {isUnlimited ? "Manage Plan →" : "Upgrade Plan →"}
       </Link>
     </div>
   )

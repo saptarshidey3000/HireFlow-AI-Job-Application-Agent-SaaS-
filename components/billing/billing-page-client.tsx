@@ -121,7 +121,7 @@ export function BillingPageClient({
     <div className="space-y-8 pb-12">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="flex items-center justify-between rounded-xl border border-[rgba(43,138,112,0.4)] bg-[rgba(13,59,46,0.7)] px-4 py-3 text-xs text-white shadow-xl backdrop-blur-md">
+        <div className="flex items-center justify-between rounded-md border-2 border-[#2b8a70] bg-[#0d3b2e] px-4 py-3 text-xs font-bold text-white shadow-[3px_3px_0px_0px_#000000]">
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-[#3FA98A] shrink-0" />
             <span>{toastMessage}</span>
@@ -129,7 +129,7 @@ export function BillingPageClient({
           <button
             type="button"
             onClick={() => setToastMessage(null)}
-            className="text-xs text-[#707070] hover:text-white ml-3"
+            className="text-xs text-[#707070] hover:text-white ml-3 cursor-pointer"
           >
             ✕
           </button>
@@ -138,13 +138,13 @@ export function BillingPageClient({
 
       {/* Dev Mode Stripe Banner */}
       {!isStripeConfigured && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[rgba(214,168,79,0.3)] bg-[rgba(30,22,10,0.55)] p-4 text-xs text-[#CFCFCF]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border-2 border-[#D6A84F] bg-[rgba(30,22,10,0.85)] p-4 text-xs text-[#CFCFCF] shadow-[3px_3px_0px_0px_#000000]">
           <div className="flex items-start gap-2.5">
             <Sparkles className="size-4.5 text-[#D6A84F] shrink-0 mt-0.5" />
             <div>
-              <span className="font-semibold text-white">Stripe Local Sandbox Mode: </span>
+              <span className="font-bold uppercase text-white">Stripe Sandbox Mode: </span>
               <span>
-                <code className="text-[#D6A84F]">STRIPE_SECRET_KEY</code> is not configured in <code className="text-[#D6A84F]">.env.local</code>. Upgrades will simulate immediately in Supabase so you can test daily limits and full features without test card checkout. To enable real Stripe Checkout, add your Stripe Secret Key to <code className="text-[#D6A84F]">.env.local</code>.
+                <code className="text-[#D6A84F]">STRIPE_SECRET_KEY</code> is not configured in <code className="text-[#D6A84F]">.env.local</code>. Upgrades will simulate immediately in Supabase so you can test daily limits and full features without test card checkout.
               </span>
             </div>
           </div>
@@ -152,7 +152,7 @@ export function BillingPageClient({
       )}
 
       {syncing && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-[#3FA98A]/30 bg-[rgba(13,59,46,0.4)] p-4 text-xs text-[#3FA98A]">
+        <div className="flex items-center gap-2.5 rounded-md border-2 border-[#3FA98A] bg-[#0d3b2e] p-4 text-xs font-bold text-[#3FA98A] shadow-[3px_3px_0px_0px_#000000]">
           <Loader2 className="size-4 animate-spin shrink-0" />
           <span>Synchronizing your latest subscription with Stripe...</span>
         </div>
@@ -161,14 +161,14 @@ export function BillingPageClient({
       {/* Page Header */}
       <div className="space-y-1">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl border border-[rgba(43,138,112,0.3)] bg-[rgba(13,59,46,0.4)] text-[#3FA98A]">
+          <div className="flex size-9 items-center justify-center rounded-md border-2 border-[#2b8a70] bg-[#0d3b2e] text-[#3FA98A] shadow-[2px_2px_0px_0px_#000000]">
             <CreditCard className="size-4.5" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h1 className="text-2xl font-bold uppercase tracking-tight text-white sm:text-3xl">
             Billing & Subscriptions
           </h1>
         </div>
-        <p className="text-sm text-[#A7A7A7]">
+        <p className="text-sm font-medium text-[#A7A7A7]">
           Manage your subscription plan, view daily automated application usage, and access payment receipts.
         </p>
       </div>
@@ -176,21 +176,21 @@ export function BillingPageClient({
       {/* Section 1: Current Plan & Daily Usage Info */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* Current Plan Overview Card */}
-        <div className="glass-card flex flex-col justify-between rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(32,32,32,0.6)] p-6 lg:col-span-6">
+        <div className="flex flex-col justify-between rounded-lg border-2 border-[#2d3835] bg-[#181818] p-6 shadow-[4px_4px_0px_0px_#0d3b2e] lg:col-span-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#707070]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#707070]">
                   Current Plan
                 </span>
                 <span
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                    "inline-flex items-center gap-1 rounded-[4px] border-2 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider shadow-[1px_1px_0px_0px_#000000]",
                     plan.id === "unlimited"
-                      ? "border border-[#eab308]/40 bg-[#eab308]/15 text-[#eab308]"
+                      ? "border-[#eab308] bg-[#3a2e12] text-[#eab308]"
                       : plan.id === "pro"
-                      ? "border border-[#3FA98A]/40 bg-[rgba(13,59,46,0.4)] text-[#3FA98A]"
-                      : "border border-[#404040] bg-[#242424] text-[#CFCFCF]"
+                      ? "border-[#2b8a70] bg-[#0d3b2e] text-[#3FA98A]"
+                      : "border-[#384843] bg-[#141414] text-[#CFCFCF]"
                   )}
                 >
                   {plan.id === "unlimited" ? (
@@ -204,10 +204,10 @@ export function BillingPageClient({
 
               <span
                 className={cn(
-                  "rounded-md border px-2 py-0.5 text-[11px] font-medium capitalize",
+                  "rounded-[4px] border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
                   subscription.status === "active"
-                    ? "border-[#3FA98A]/30 bg-[rgba(13,59,46,0.3)] text-[#3FA98A]"
-                    : "border-[#f87171]/30 bg-[#f87171]/10 text-[#f87171]"
+                    ? "border-[#2b8a70] bg-[#0d3b2e] text-[#3FA98A]"
+                    : "border-[#f87171] bg-[#381414] text-[#f87171]"
                 )}
               >
                 {subscription.status}
@@ -219,23 +219,23 @@ export function BillingPageClient({
                 {plan.priceDisplay}
                 <span className="text-sm font-normal text-[#707070]"> / month</span>
               </div>
-              <p className="mt-1 text-xs text-[#A7A7A7]">{plan.tagline}</p>
+              <p className="mt-1 text-xs font-medium text-[#A7A7A7]">{plan.tagline}</p>
             </div>
 
-            <div className="space-y-2 border-t border-[#333333] pt-4 text-xs">
+            <div className="space-y-2 border-t-2 border-[#2d3835] pt-4 text-xs">
               <div className="flex items-center justify-between text-[#CFCFCF]">
-                <span className="text-[#707070]">Daily AI Apply Limit:</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[#707070]">Daily AI Apply Limit:</span>
+                <span className="font-bold text-white">
                   {isCurrentPlanUnlimited ? "Unlimited" : `${plan.limit} applications / day`}
                 </span>
               </div>
 
               {subscription.current_period_end && plan.id !== "free" && (
                 <div className="flex items-center justify-between text-[#CFCFCF]">
-                  <span className="text-[#707070]">
+                  <span className="font-semibold text-[#707070]">
                     {subscription.cancel_at_period_end ? "Expires on:" : "Next Renewal Date:"}
                   </span>
-                  <span className="font-medium text-white">
+                  <span className="font-bold text-white">
                     {new Date(subscription.current_period_end).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -248,7 +248,7 @@ export function BillingPageClient({
           </div>
 
           {/* Manage Subscription Buttons */}
-          <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-[#333333] pt-4">
+          <div className="mt-6 flex flex-wrap items-center gap-3 border-t-2 border-[#2d3835] pt-4">
             {subscription.stripe_customer_id ? (
               <Button
                 type="button"
@@ -256,7 +256,7 @@ export function BillingPageClient({
                 size="sm"
                 disabled={portalLoading}
                 onClick={handleOpenPortal}
-                className="h-9 gap-2 rounded-xl border-[#333333] bg-[#242424] text-xs font-medium text-white transition-all hover:border-[#404040] hover:bg-[#2c2c2c]"
+                className="h-9 gap-2 text-xs font-bold uppercase"
               >
                 {portalLoading ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -273,7 +273,7 @@ export function BillingPageClient({
                 size="sm"
                 onClick={() => handleSubscribe("pro")}
                 disabled={loadingPlan === "pro"}
-                className="h-9 gap-1.5 rounded-xl bg-[#2B8A70] px-4 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#3FA98A] hover:shadow-[0_0_16px_rgba(43,138,112,0.3)]"
+                className="h-9 gap-1.5 px-4 text-xs font-bold uppercase tracking-wider"
               >
                 {loadingPlan === "pro" ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -290,7 +290,7 @@ export function BillingPageClient({
                 size="sm"
                 onClick={() => handleSubscribe("unlimited")}
                 disabled={loadingPlan === "unlimited"}
-                className="h-9 gap-1.5 rounded-xl bg-gradient-to-r from-[#2B8A70] to-[#3FA98A] px-4 text-xs font-semibold text-white shadow-sm transition-all hover:brightness-110"
+                className="h-9 gap-1.5 px-4 text-xs font-bold uppercase tracking-wider"
               >
                 {loadingPlan === "unlimited" ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -304,26 +304,26 @@ export function BillingPageClient({
         </div>
 
         {/* Daily Usage Information Card */}
-        <div className="glass-card flex flex-col justify-between rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[rgba(32,32,32,0.6)] p-6 lg:col-span-6">
+        <div className="flex flex-col justify-between rounded-lg border-2 border-[#2d3835] bg-[#181818] p-6 shadow-[4px_4px_0px_0px_#0d3b2e] lg:col-span-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#707070]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#707070]">
                 Today&apos;s Usage Information
               </span>
-              <span className="text-xs text-[#707070] flex items-center gap-1">
+              <span className="text-xs font-semibold text-[#707070] flex items-center gap-1">
                 <Clock className="size-3" /> Resets Daily at Midnight UTC
               </span>
             </div>
 
             {isCurrentPlanUnlimited ? (
               /* Unlimited usage display */
-              <div className="space-y-3 rounded-xl border border-[rgba(63,169,138,0.25)] bg-[rgba(13,59,46,0.35)] p-4 text-center">
+              <div className="space-y-3 rounded-md border-2 border-[#2b8a70] bg-[#0d3b2e] p-4 text-center shadow-[3px_3px_0px_0px_#000000]">
                 <div className="flex items-center justify-center gap-2 text-[#3FA98A]">
                   <InfinityIcon className="size-8" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Unlimited Usage Active</h3>
-                  <p className="text-xs text-[#CFCFCF]">
+                  <h3 className="text-lg font-bold uppercase text-white">Unlimited Usage Active</h3>
+                  <p className="text-xs font-medium text-[#CFCFCF]">
                     You have submitted <strong className="text-white">{usage.usedToday}</strong> AI automated applications today. No daily caps applied.
                   </p>
                 </div>
@@ -341,7 +341,7 @@ export function BillingPageClient({
                   </div>
                   <span
                     className={cn(
-                      "text-xs font-semibold",
+                      "text-xs font-bold uppercase",
                       usage.remainingToday === 0
                         ? "text-[#f87171]"
                         : usage.remainingToday <= 2
@@ -354,10 +354,10 @@ export function BillingPageClient({
                 </div>
 
                 {/* Progress bar */}
-                <div className="h-2.5 w-full rounded-full bg-[#242424] overflow-hidden border border-[#333333]">
+                <div className="h-3 w-full rounded-[4px] bg-[#141414] overflow-hidden border-2 border-[#384843] shadow-[1px_1px_0px_0px_#000000]">
                   <div
                     className={cn(
-                      "h-full rounded-full transition-all duration-500",
+                      "h-full rounded-none transition-all duration-500",
                       usagePercent >= 100
                         ? "bg-[#f87171]"
                         : usagePercent >= 75
@@ -370,20 +370,20 @@ export function BillingPageClient({
               </div>
             )}
 
-            <div className="rounded-xl border border-[rgba(255,255,255,0.04)] bg-[#1a1a1a] p-3.5 space-y-2 text-xs text-[#A7A7A7]">
-              <div className="flex items-center gap-2 text-white font-medium">
+            <div className="rounded-md border-2 border-[#384843] bg-[#141414] p-3.5 space-y-2 text-xs text-[#A7A7A7]">
+              <div className="flex items-center gap-2 text-white font-bold uppercase">
                 <ShieldCheck className="size-4 text-[#3FA98A]" />
                 <span>Fair-Use AI Auto-Apply Policies</span>
               </div>
-              <p className="text-[11px] leading-relaxed">
+              <p className="text-[11px] font-medium leading-relaxed">
                 Daily limits safeguard cloud browser instances against platform rate-limits, ensuring safe and high-deliverability submissions for your job applications.
               </p>
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between border-t border-[#333333] pt-4 text-xs text-[#707070]">
-            <span>Date: {usage.usageDate}</span>
-            <span className="text-[#3FA98A] font-medium">Auto-refreshed in real-time</span>
+          <div className="mt-4 flex items-center justify-between border-t-2 border-[#2d3835] pt-4 text-xs text-[#707070]">
+            <span className="font-semibold">Date: {usage.usageDate}</span>
+            <span className="text-[#3FA98A] font-bold uppercase">Auto-refreshed in real-time</span>
           </div>
         </div>
       </div>
@@ -391,10 +391,10 @@ export function BillingPageClient({
       {/* Section 2: Available Subscription Plans */}
       <div className="space-y-4">
         <div className="space-y-1">
-          <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+          <h2 className="text-xl font-bold uppercase tracking-tight text-white sm:text-2xl">
             Available Plans & Pricing
           </h2>
-          <p className="text-xs text-[#A7A7A7]">
+          <p className="text-xs font-medium text-[#A7A7A7]">
             Choose the subscription that fits your search speed. Upgrade, downgrade, or cancel anytime.
           </p>
         </div>
@@ -409,20 +409,20 @@ export function BillingPageClient({
               <div
                 key={p.id}
                 className={cn(
-                  "glass-card relative flex flex-col justify-between rounded-2xl p-6 transition-all duration-200",
+                  "relative flex flex-col justify-between rounded-lg border-2 p-6 transition-all duration-120",
                   isPopular
-                    ? "border-[#2B8A70] bg-[rgba(13,59,46,0.25)] shadow-[0_0_30px_rgba(43,138,112,0.15)] ring-1 ring-[#2B8A70]/50"
-                    : "border-[rgba(255,255,255,0.06)] bg-[rgba(32,32,32,0.5)] hover:border-[#404040]"
+                    ? "border-[#2b8a70] bg-[#0d3b2e]/60 shadow-[6px_6px_0px_0px_#000000]"
+                    : "border-[#2d3835] bg-[#181818] shadow-[4px_4px_0px_0px_#0d3b2e]"
                 )}
               >
                 {/* Badge if available */}
                 {p.badge && (
                   <span
                     className={cn(
-                      "absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                      "absolute -top-3 left-1/2 -translate-x-1/2 rounded-[4px] border px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_#000000]",
                       isPopular
-                        ? "bg-[#2B8A70] text-white shadow-md"
-                        : "bg-[#eab308] text-black shadow-md"
+                        ? "border-[#3fa98a] bg-[#2B8A70] text-white"
+                        : "border-[#eab308] bg-[#eab308] text-black"
                     )}
                   >
                     {p.badge}
@@ -431,37 +431,37 @@ export function BillingPageClient({
 
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-lg font-bold text-white">{p.name}</h3>
-                    <p className="mt-1 text-xs text-[#A7A7A7]">{p.description}</p>
+                    <h3 className="text-lg font-bold uppercase text-white">{p.name}</h3>
+                    <p className="mt-1 text-xs font-medium text-[#A7A7A7]">{p.description}</p>
                   </div>
 
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-extrabold text-white">
                       {p.priceDisplay}
                     </span>
-                    <span className="text-xs text-[#707070]">/ month</span>
+                    <span className="text-xs font-semibold text-[#707070]">/ month</span>
                   </div>
 
                   {/* Feature List */}
-                  <ul className="space-y-2.5 border-t border-[#333333] pt-4 text-xs text-[#CFCFCF]">
+                  <ul className="space-y-2.5 border-t-2 border-[#2d3835] pt-4 text-xs text-[#CFCFCF]">
                     {p.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-2.5">
-                        <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[rgba(63,169,138,0.2)] text-[#3FA98A] mt-0.5">
+                        <div className="flex size-4 shrink-0 items-center justify-center rounded-[3px] border border-[#2b8a70] bg-[#0d3b2e] text-[#3FA98A] mt-0.5">
                           <Check className="size-2.5 stroke-[3]" />
                         </div>
-                        <span className="leading-snug">{feature}</span>
+                        <span className="font-medium leading-snug">{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Plan Action Button */}
-                <div className="mt-8 border-t border-[#333333] pt-4">
+                <div className="mt-8 border-t-2 border-[#2d3835] pt-4">
                   {isCurrent ? (
                     <Button
                       type="button"
                       disabled
-                      className="w-full rounded-xl border border-[#3FA98A]/40 bg-[rgba(13,59,46,0.4)] text-xs font-semibold text-[#3FA98A]"
+                      className="w-full border-2 border-[#2b8a70] bg-[#0d3b2e] text-xs font-bold uppercase text-[#3FA98A] shadow-none"
                     >
                       <Check className="size-3.5 mr-1" />
                       <span>Current Active Plan</span>
@@ -471,7 +471,7 @@ export function BillingPageClient({
                       type="button"
                       variant="outline"
                       onClick={handleOpenPortal}
-                      className="w-full rounded-xl border-[#333333] text-xs font-medium text-[#A7A7A7] hover:text-white"
+                      className="w-full text-xs font-bold uppercase"
                     >
                       Downgrade in Portal
                     </Button>
@@ -480,12 +480,7 @@ export function BillingPageClient({
                       type="button"
                       onClick={() => handleSubscribe(p.id as "pro" | "unlimited")}
                       disabled={loadingPlan === p.id}
-                      className={cn(
-                        "w-full rounded-xl text-xs font-semibold text-white shadow-sm transition-all",
-                        isPopular
-                          ? "bg-[#2B8A70] hover:bg-[#3FA98A] hover:shadow-[0_0_16px_rgba(43,138,112,0.35)]"
-                          : "bg-[#242424] border border-[#333333] hover:border-[#2B8A70] hover:bg-[rgba(13,59,46,0.3)] hover:text-white"
-                      )}
+                      className="w-full text-xs font-bold uppercase tracking-wider"
                     >
                       {loadingPlan === p.id ? (
                         <Loader2 className="size-3.5 animate-spin" />
@@ -504,16 +499,16 @@ export function BillingPageClient({
       {/* Section 3: Invoices & Payment History */}
       <div className="space-y-4">
         <div className="space-y-1">
-          <h2 className="text-lg font-bold tracking-tight text-white sm:text-xl">
+          <h2 className="text-lg font-bold uppercase tracking-tight text-white sm:text-xl">
             Billing History & Receipts
           </h2>
-          <p className="text-xs text-[#707070]">
+          <p className="text-xs font-medium text-[#707070]">
             Review all previous subscription invoices and downloaded tax receipts.
           </p>
         </div>
 
         {invoices.length === 0 ? (
-          <div className="glass-card flex flex-col items-center justify-center rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[rgba(32,32,32,0.4)] p-8 text-center text-xs text-[#707070]">
+          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-[#2d3835] bg-[#181818] p-8 text-center text-xs font-medium text-[#707070] shadow-[4px_4px_0px_0px_#0d3b2e]">
             <Calendar className="size-8 text-[#404040] mb-2" />
             <p>No billing invoices recorded yet.</p>
             <p className="text-[11px] text-[#555555] mt-0.5">
@@ -521,27 +516,27 @@ export function BillingPageClient({
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[rgba(32,32,32,0.5)]">
+          <div className="overflow-hidden rounded-lg border-2 border-[#2d3835] bg-[#181818] shadow-[4px_4px_0px_0px_#0d3b2e]">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-[#333333] bg-[#1a1a1a] text-[#707070]">
+              <thead className="border-b-2 border-[#2d3835] bg-[#141414] text-[#707070]">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Date</th>
-                  <th className="px-4 py-3 font-semibold">Amount</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold text-right">Invoice Receipt</th>
+                  <th className="px-4 py-3 font-bold uppercase">Date</th>
+                  <th className="px-4 py-3 font-bold uppercase">Amount</th>
+                  <th className="px-4 py-3 font-bold uppercase">Status</th>
+                  <th className="px-4 py-3 font-bold uppercase text-right">Invoice Receipt</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2a2a2a] text-[#CFCFCF]">
+              <tbody className="divide-y-2 divide-[#242424] text-[#CFCFCF]">
                 {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-[rgba(255,255,255,0.02)]">
-                    <td className="px-4 py-3 font-medium text-white">
+                  <tr key={inv.id} className="hover:bg-[#1f1f1f]">
+                    <td className="px-4 py-3 font-bold text-white">
                       {new Date(inv.created_at).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
                       })}
                     </td>
-                    <td className="px-4 py-3 font-semibold text-white">
+                    <td className="px-4 py-3 font-bold text-white">
                       ${(inv.amount_paid / 100).toFixed(2)}{" "}
                       <span className="uppercase text-[10px] text-[#707070]">
                         {inv.currency}
@@ -550,10 +545,10 @@ export function BillingPageClient({
                     <td className="px-4 py-3">
                       <span
                         className={cn(
-                          "rounded-md px-2 py-0.5 text-[10px] font-medium capitalize",
+                          "rounded-[4px] border px-2 py-0.5 text-[10px] font-bold uppercase",
                           inv.status === "paid"
-                            ? "border border-[#3FA98A]/30 bg-[rgba(13,59,46,0.3)] text-[#3FA98A]"
-                            : "border border-[#f87171]/30 bg-[#f87171]/10 text-[#f87171]"
+                            ? "border-[#2b8a70] bg-[#0d3b2e] text-[#3FA98A]"
+                            : "border-[#f87171] bg-[#381414] text-[#f87171]"
                         )}
                       >
                         {inv.status}
@@ -565,7 +560,7 @@ export function BillingPageClient({
                           href={inv.invoice_pdf || inv.hosted_invoice_url || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-[#3FA98A] hover:underline"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-[#3FA98A] hover:underline"
                         >
                           <Download className="size-3" />
                           <span>PDF Receipt</span>

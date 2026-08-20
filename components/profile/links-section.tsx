@@ -88,7 +88,7 @@ export function LinksSection({
         {items.map((item, index) => (
           <div
             key={index}
-            className="rounded-lg border border-[#333333] bg-[#1C1C1C]/50 p-4"
+            className="rounded-md border-2 border-[#2d3835] bg-[#141414] p-4 shadow-[2px_2px_0px_0px_#000000]"
           >
             <div className="grid gap-3 md:grid-cols-[160px_1fr_1fr]">
               <select
@@ -102,10 +102,10 @@ export function LinksSection({
                     )
                   )
                 }
-                className="h-10 rounded-md border border-transparent bg-[#242424] px-3 text-sm text-white outline-none focus:border-[#2B8A70]"
+                className="h-10 rounded-md border-2 border-[#384843] bg-[#141414] px-3 text-sm font-medium text-white outline-none shadow-[2px_2px_0px_0px_#000000] focus:border-[#3fa98a]"
               >
                 {linkTypes.map((type) => (
-                  <option key={type} value={type}>
+                  <option key={type} value={type} className="bg-[#141414] text-white">
                     {type.charAt(0).toUpperCase() + type.slice(1)}
                   </option>
                 ))}

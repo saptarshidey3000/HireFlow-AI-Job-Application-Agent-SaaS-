@@ -31,13 +31,13 @@ export function JobSortSelector({
         value={value}
         onChange={(event) => onChange(event.target.value as JobSortMode)}
         className={cn(
-          "h-8.5 appearance-none rounded-xl border border-[#333333]",
-          "bg-[#242424] pl-8.5 pr-8 text-xs font-medium text-white",
-          "focus:border-[#2B8A70] focus:outline-none transition-colors cursor-pointer hover:border-[#404040]"
+          "h-8.5 appearance-none rounded-md border-2 border-[#384843]",
+          "bg-[#141414] pl-8.5 pr-8 text-xs font-bold uppercase tracking-wider text-white shadow-[2px_2px_0px_0px_#000000]",
+          "focus:border-[#3fa98a] focus:outline-none transition-colors cursor-pointer hover:border-[#3fa98a]"
         )}
       >
         {SORT_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value} className="bg-[#1C1C1C] text-white">
+          <option key={option.value} value={option.value} className="bg-[#141414] text-white">
             {option.label}
           </option>
         ))}

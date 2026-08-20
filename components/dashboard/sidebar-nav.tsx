@@ -29,25 +29,19 @@ function NavLink({
   const Icon = item.icon
 
   const linkClassName = cn(
-    "group relative flex items-center rounded-lg transition-all duration-150 ease-in-out",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2B8A70]/30",
-    collapsed ? "size-10 justify-center px-0" : "h-11 gap-3 px-3 py-2.5",
+    "group relative flex items-center rounded-md font-semibold transition-all duration-120 ease-in-out",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3fa98a]/50",
+    collapsed ? "size-10 justify-center px-0" : "h-10 gap-3 px-3 py-2",
     active
-      ? "bg-[rgba(13,59,46,0.65)] text-white"
-      : "bg-transparent text-[#A7A7A7] hover:bg-[#242424] hover:text-white"
+      ? "border-2 border-[#2b8a70] bg-[#0d3b2e] text-white shadow-[3px_3px_0px_0px_#000000]"
+      : "border-2 border-transparent text-[#A7A7A7] hover:border-[#384843] hover:bg-[#1a1a1a] hover:text-white hover:shadow-[2px_2px_0px_0px_#000000]"
   )
 
   const linkContent = (
     <>
-      {active && (
-        <span
-          aria-hidden
-          className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[#3FA98A]"
-        />
-      )}
-      <Icon className="size-[18px] shrink-0" />
+      <Icon className={cn("size-[18px] shrink-0", active ? "text-[#3FA98A]" : "text-[#707070] group-hover:text-white")} />
       {!collapsed && (
-        <span className="truncate text-sm font-medium">{item.label}</span>
+        <span className="truncate text-sm font-semibold tracking-tight">{item.label}</span>
       )}
     </>
   )
@@ -81,7 +75,7 @@ function NavLink({
       <TooltipContent
         side="right"
         sideOffset={8}
-        className="border border-[#333333] bg-[#242424] text-white"
+        className="border-2 border-[#2b8a70] bg-[#141414] font-semibold text-white shadow-[3px_3px_0px_0px_#000000]"
       >
         {item.label}
       </TooltipContent>

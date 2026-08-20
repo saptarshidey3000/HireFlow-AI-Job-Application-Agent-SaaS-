@@ -66,10 +66,10 @@ export function MissingFieldsBanner({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[#fbbf24]/30 bg-gradient-to-r from-[rgba(251,191,36,0.12)] via-[rgba(251,191,36,0.06)] to-transparent p-5 backdrop-blur-md animate-in fade-in slide-in-from-top-3">
+    <div className="relative overflow-hidden rounded-lg border-2 border-[#fbbf24] bg-[#221c0e] p-5 shadow-[4px_4px_0px_0px_#000000] animate-in fade-in slide-in-from-top-3">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3.5">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#fbbf24]/20 text-[#fbbf24]">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-md border-2 border-[#fbbf24] bg-[#3a2e12] text-[#fbbf24] shadow-[2px_2px_0px_0px_#000000]">
             <AlertTriangle className="size-5" />
           </div>
 
@@ -78,7 +78,7 @@ export function MissingFieldsBanner({
               <span className="text-xs font-bold uppercase tracking-wider text-[#fbbf24]">
                 Missing Profile Information
               </span>
-              <span className="rounded-md border border-[#333333] bg-[#242424] px-2 py-0.5 text-[11px] font-medium text-[#A7A7A7]">
+              <span className="rounded-[4px] border border-[#384843] bg-[#141414] px-2 py-0.5 text-[11px] font-bold uppercase text-[#A7A7A7]">
                 {application.company || "Job Application"}
               </span>
             </div>
@@ -87,14 +87,14 @@ export function MissingFieldsBanner({
               Complete required fields to submit your application for &quot;{application.job_title}&quot;
             </h3>
 
-            <p className="text-xs text-[#CFCFCF] max-w-2xl">
+            <p className="text-xs font-medium text-[#CFCFCF] max-w-2xl">
               The employer application form requires additional information before our AI Agent can finalize and submit your application.
             </p>
 
             {/* Missing Fields list */}
             {application.missing_fields && application.missing_fields.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 pt-2">
-                <span className="text-xs font-semibold text-[#A7A7A7]">Required:</span>
+                <span className="text-xs font-bold uppercase text-[#A7A7A7]">Required:</span>
                 {application.missing_fields.map((field) => (
                   <button
                     key={field.fieldKey}
@@ -106,7 +106,7 @@ export function MissingFieldsBanner({
                         onSelectTab(field.section)
                       }
                     }}
-                    className="inline-flex items-center gap-1 rounded-lg border border-[#fbbf24]/40 bg-[#fbbf24]/15 px-2.5 py-1 text-xs font-medium text-[#fbbf24] transition-colors hover:bg-[#fbbf24]/25"
+                    className="inline-flex items-center gap-1 rounded-[4px] border-2 border-[#fbbf24] bg-[#2d220c] px-2.5 py-1 text-xs font-bold text-[#fbbf24] shadow-[2px_2px_0px_0px_#000000] transition-all hover:bg-[#3d2e10] cursor-pointer"
                   >
                     <span>{field.label}</span>
                     <ArrowRight className="size-3" />
@@ -125,10 +125,10 @@ export function MissingFieldsBanner({
             disabled={resuming || resumed}
             onClick={handleResume}
             className={cn(
-              "h-10 rounded-xl px-5 text-xs font-semibold transition-all shadow-lg",
+              "h-10 px-5 text-xs font-bold uppercase tracking-wider transition-all",
               resumed
-                ? "bg-[#2B8A70] text-white"
-                : "bg-gradient-to-r from-[#2B8A70] to-[#3FA98A] text-white hover:from-[#3FA98A] hover:to-[#2B8A70]"
+                ? "border-2 border-[#145a46] bg-[#2B8A70] text-white"
+                : "border-2 border-[#145a46] bg-[#2B8A70] text-white shadow-[3px_3px_0px_0px_#000000] hover:bg-[#3FA98A]"
             )}
           >
             {resuming ? (

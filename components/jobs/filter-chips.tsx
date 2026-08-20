@@ -102,13 +102,13 @@ export function FilterChips({
 
   return (
     <div className="flex flex-wrap items-center gap-2 pt-1">
-      <span className="text-xs font-medium text-[#707070]">Active filters:</span>
+      <span className="text-xs font-bold uppercase tracking-wider text-[#707070]">Active:</span>
       {chips.map((chip) => (
         <button
           key={chip.key}
           type="button"
           onClick={chip.remove}
-          className="group inline-flex items-center gap-1.5 rounded-full border border-[#2B8A70]/30 bg-[rgba(13,59,46,0.35)] px-3 py-1 text-xs font-medium text-[#3FA98A] transition-all hover:border-[#E05A5A]/50 hover:bg-[rgba(224,90,90,0.15)] hover:text-[#ff9999]"
+          className="group inline-flex items-center gap-1.5 rounded-[4px] border-2 border-[#2B8A70] bg-[#0d3b2e] px-2.5 py-1 text-xs font-bold text-[#3FA98A] shadow-[2px_2px_0px_0px_#000000] transition-all cursor-pointer hover:border-[#E05A5A] hover:bg-[#4a1818] hover:text-[#ff9999]"
         >
           <span>{chip.label}</span>
           <X className="size-3 transition-transform group-hover:scale-110" />
@@ -117,7 +117,7 @@ export function FilterChips({
       <button
         type="button"
         onClick={onClear}
-        className="inline-flex items-center gap-1 text-xs font-medium text-[#A7A7A7] transition-colors hover:text-white"
+        className="inline-flex items-center gap-1 text-xs font-bold text-[#A7A7A7] transition-colors hover:text-white hover:underline cursor-pointer"
       >
         <RotateCcw className="size-3" />
         <span>Clear all</span>

@@ -38,7 +38,7 @@ export function ProfileCompletenessCard({
   )
 
   return (
-    <div className={cn("glass-card p-6", className)}>
+    <div className={cn("rounded-lg border-2 border-[#2d3835] bg-[#181818] p-6 shadow-[4px_4px_0px_0px_#0d3b2e]", className)}>
       <div
         className={cn(
           "flex gap-6",
@@ -52,32 +52,32 @@ export function ProfileCompletenessCard({
         />
 
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-[#3FA98A]">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#3FA98A]">
             Profile completeness
           </p>
-          <h2 className="mt-1 text-xl font-medium text-white">
+          <h2 className="mt-1 text-xl font-bold uppercase tracking-tight text-white">
             {completeness.completedCount} of {completeness.totalSections} sections
             complete
           </h2>
-          <p className="mt-2 text-sm text-[#A7A7A7]">
+          <p className="mt-2 text-xs font-medium text-[#A7A7A7]">
             {getProgressMessage(completeness.percent)}
           </p>
         </div>
       </div>
 
       {!compact && incompleteSections.length > 0 ? (
-        <div className="mt-6 border-t border-[#333333] pt-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-[#707070]">
+        <div className="mt-6 border-t-2 border-[#2d3835] pt-5">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#707070]">
             Suggested next steps
           </p>
           <ul className="mt-3 space-y-2">
             {incompleteSections.slice(0, 3).map((section) => (
               <li
                 key={section.id}
-                className="flex items-center justify-between gap-3 text-sm"
+                className="flex items-center justify-between gap-3 text-xs font-semibold"
               >
                 <span className="text-[#A7A7A7]">{section.label}</span>
-                <span className="shrink-0 text-[#3FA98A]">{section.percent}%</span>
+                <span className="shrink-0 font-bold text-[#3FA98A]">{section.percent}%</span>
               </li>
             ))}
           </ul>

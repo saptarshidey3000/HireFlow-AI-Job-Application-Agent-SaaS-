@@ -23,9 +23,9 @@ export function ProfileSection({
         <div className="flex items-start justify-between gap-4">
           {!hideTitle ? (
             <div>
-              <h2 className="text-lg font-medium text-white">{title}</h2>
+              <h2 className="text-lg font-bold uppercase tracking-tight text-white">{title}</h2>
               {description ? (
-                <p className="mt-1 text-sm text-[#A7A7A7]">{description}</p>
+                <p className="mt-1 text-xs font-medium text-[#A7A7A7]">{description}</p>
               ) : null}
             </div>
           ) : (
@@ -34,7 +34,7 @@ export function ProfileSection({
           {action}
         </div>
       ) : null}
-      <div className="glass-card p-6">{children}</div>
+      <div className="rounded-lg border-2 border-[#2d3835] bg-[#181818] p-6 shadow-[4px_4px_0px_0px_#0d3b2e]">{children}</div>
     </section>
   )
 }

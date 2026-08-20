@@ -89,10 +89,8 @@ export function JobsProfileCompleteness({
   const isAllComplete = percent === 100
 
   return (
-    <div className="glass-card relative overflow-hidden rounded-2xl p-5 md:p-6 bg-[rgba(36,36,36,0.55)] border border-[rgba(255,255,255,0.06)] shadow-lg">
-      <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-[rgba(43,138,112,0.12)] blur-2xl" />
-
-      <h3 className="text-sm font-semibold tracking-wide text-white">
+    <div className="relative overflow-hidden rounded-lg border-2 border-[#2d3835] bg-[#181818] p-5 shadow-[4px_4px_0px_0px_#0d3b2e] md:p-6">
+      <h3 className="text-sm font-bold uppercase tracking-wider text-white">
         Profile Completeness
       </h3>
 
@@ -110,7 +108,7 @@ export function JobsProfileCompleteness({
               <span>Profile in progress</span>
             )}
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-[#A7A7A7]">
+          <p className="mt-1 text-xs font-medium leading-relaxed text-[#A7A7A7]">
             {isAllComplete
               ? "Your profile is complete and ready for AI applications."
               : "Complete all sections to boost your AI match accuracy."}
@@ -119,11 +117,11 @@ export function JobsProfileCompleteness({
       </div>
 
       {/* Checklist items */}
-      <div className="mt-5 space-y-2.5 border-t border-[#333333] pt-4">
+      <div className="mt-5 space-y-2.5 border-t-2 border-[#2d3835] pt-4">
         {checklist.map((item) => (
           <div
             key={item.label}
-            className="flex items-center justify-between text-xs"
+            className="flex items-center justify-between text-xs font-semibold"
           >
             <span
               className={cn(
@@ -135,11 +133,11 @@ export function JobsProfileCompleteness({
             </span>
 
             {item.complete ? (
-              <span className="flex size-4.5 items-center justify-center rounded-full bg-[rgba(63,169,138,0.2)] text-[#3FA98A]">
+              <span className="flex size-4.5 items-center justify-center rounded-[3px] border border-[#2b8a70] bg-[#0d3b2e] text-[#3FA98A]">
                 <Check className="size-3 stroke-[2.5]" />
               </span>
             ) : (
-              <span className="size-2 rounded-full bg-[#404040]" />
+              <span className="size-2 rounded-[2px] bg-[#404040]" />
             )}
           </div>
         ))}
@@ -149,7 +147,7 @@ export function JobsProfileCompleteness({
       <div className="mt-5">
         <Link
           href="/dashboard/profile"
-          className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#2B8A70] py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#3FA98A] hover:shadow-[0_0_15px_rgba(43,138,112,0.3)]"
+          className="group flex w-full items-center justify-center gap-2 rounded-md border-2 border-[#145a46] bg-[#2B8A70] py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-[3px_3px_0px_0px_#000000] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#3FA98A] active:translate-x-0 active:translate-y-0"
         >
           <span>Improve Profile</span>
           <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
