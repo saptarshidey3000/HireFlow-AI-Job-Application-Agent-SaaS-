@@ -3,6 +3,8 @@ import { getOnboardingStatus } from "@/lib/data/onboarding"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
+export const dynamic = "force-dynamic"
+
 export default async function DashboardRootLayout({
   children,
 }: LayoutProps<"/dashboard">) {
